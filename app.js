@@ -86,6 +86,34 @@ function initAdmin() {
     }
   };
 
+  // ---------- Upload de foto (converte em Base64) ----------
+  const inputArquivo = document.getElementById('rs-imagem-arquivo');
+  const preview = document.getElementById('rs-preview');
+
+  if (inputArquivo) {
+    inputArquivo.addEventListener('change', function () {
+      const arquivo = inputArquivo.files[0];
+      if (!arquivo) return;
+
+      // Aviso simples se a foto for muito grande (localStorage tem limite)
+      if (arquivo.size > 2 * 1024 * 1024) {
+        alert('Essa foto é muito grande. Escolha uma imagem de até 2MB.');
+        inputArquivo.value = '';
+        return;
+      }
+
+      const leitor = new FileReader();
+      leitor.onload = function (e) {
+        document.getElementById('rs-imagem').value = e.target.result; // texto da imagem
+        if (preview) {
+          preview.src = e.target.result;
+          preview.style.display = 'block';
+        }
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+
   // Submissão do formulário
   form.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -104,8 +132,16 @@ function initAdmin() {
       return;
     }
 
-    adicionarProduto(produto);
+    try {
+      adicionarProduto(produto);
+    } catch (err) {
+      alert('Não foi possível salvar. O armazenamento pode estar cheio. Tente usar fotos menores.');
+      return;
+    }
+
     form.reset();
+    document.getElementById('rs-imagem').value = ''; // limpa o campo oculto da foto
+    if (preview) preview.style.display = 'none';     // esconde o preview
     renderTabelaAdmin();
     alert('Produto cadastrado com sucesso!');
   });

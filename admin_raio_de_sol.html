@@ -797,6 +797,51 @@
           </a>
         </div>
       </header>
+      <!-- FORMULÁRIO FUNCIONAL DE PRODUTO (cadastro real via localStorage) -->
+<section class="view" style="display:block; padding:32px;">
+  <div class="form-wrapper" style="max-width:760px">
+    <div class="form-body" style="display:block">
+      <form id="rs-form-produto">
+        <div class="form-field full" style="margin-bottom:16px">
+          <label>Nome do produto *</label>
+          <input class="form-input" id="rs-nome" type="text" required/>
+        </div>
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Preço (R$) *</label>
+          <input class="form-input" id="rs-preco" type="number" step="0.01" required/>
+        </div>
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Categoria</label>
+          <input class="form-input" id="rs-categoria" type="text"/>
+        </div>
+        <div class="form-field" style="margin-bottom:16px">
+          <label>Estoque</label>
+          <input class="form-input" id="rs-estoque" type="number"/>
+        </div>
+        <div class="form-field full" style="margin-bottom:16px">
+          <label>URL da imagem</label>
+          <input class="form-input" id="rs-imagem" type="text" placeholder="https://..."/>
+        </div>
+        <div class="form-field full" style="margin-bottom:16px">
+          <label>Descrição</label>
+          <textarea class="form-textarea" id="rs-descricao"></textarea>
+        </div>
+        <button type="submit" class="btn-primary">Salvar produto</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabela de produtos cadastrados -->
+  <div class="product-table" style="margin-top:24px;max-width:760px">
+    <table class="data-table" style="width:100%">
+      <thead>
+        <tr><th>Produto</th><th>Preço</th><th>Estoque</th><th></th></tr>
+      </thead>
+      <tbody id="rs-tabela-produtos"></tbody>
+    </table>
+  </div>
+</section>
+
 
       <!-- =================== DASHBOARD VIEW =================== -->
       <section class="view active" data-view="dashboard">
@@ -1432,6 +1477,7 @@
       }));
     });
   </script>
+<script src="app.js"></script>
 
 </body>
 </html>

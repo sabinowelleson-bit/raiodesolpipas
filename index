@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="b">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A8D0F5" />
+  <title>Raio de Sol Pipas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Plus+Jakarta+Sans:wght@400..800&family=Anton&family=Manrope:wght@400..800&family=Archivo+Black&family=Onest:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+
+  <style>
+    /* RESET */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    img, svg { display: block; max-width: 100%; }
+    button { cursor: pointer; border: 0; background: transparent; font-family: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background 0.5s ease, color 0.5s ease;
+      overflow-x: hidden;
+    }
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+    @media (max-width: 640px) { .container { padding: 0 16px; } }
+
+    /* THEME B — CÉU DIURNO */
+    :root[data-theme="b"] {
+      --bg: #FFFFFF;
+      --bg-elev: #F0F7FF;
+      --bg-card: #FFFFFF;
+      --bg-overlay: rgba(255, 255, 255, 0.88);
+      --border: #DCEAFC;
+      --border-strong: #B8D4F0;
+      --text: #0B1E3F;
+      --text-muted: #4A6584;
+      --text-dim: #8AA0BC;
+      --accent: #3B82F6;
+      --accent-2: #FBBF24;
+      --accent-3: #DC2626;
+      --accent-soft: rgba(59, 130, 246, 0.08);
+      --success: #10B981;
+      --font-display: 'Anton', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow-card: 0 10px 40px -10px rgba(59, 130, 246, 0.18);
+    }
+    :root[data-theme="b"] body {
+      background:
+        linear-gradient(180deg,
+          #7CB7F0 0%, #A8D0F5 12%, #D6E8F8 28%,
+          #F0F7FF 50%, #FFFFFF 75%, #FFFFFF 100%) no-repeat;
+      background-size: 100% 1400px;
+      background-color: #FFFFFF;
+    }
+    :root[data-theme="b"] .site-header {
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom-color: rgba(11, 30, 63, 0.08);
+    }
+
+    /* TYPOGRAPHY */
+    .eyebrow {
+      font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase; color: var(--accent);
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px;
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase; border-radius: 999px;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap; border: 1px solid transparent;
+    }
+    .btn-primary { background: var(--text); color: #fff; }
+    .btn-primary:hover { background: var(--accent); transform: translateY(-2px); box-shadow: 0 12px 30px -8px var(--accent); }
+
+    /* HEADER */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-overlay);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .site-header .container {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 18px; padding-bottom: 18px; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .brand-emoji { font-size: 32px; }
+    .brand-name { font-family: var(--font-display); font-size: 22px; letter-spacing: 0.02em; }
+    .nav { display: flex; gap: 32px; align-items: center; }
+    .nav a { font-size: 16px; font-weight: 700; color: var(--text); }
+    .header-cta {
+      display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px;
+      background: var(--accent-soft); color: var(--accent); border-radius: 999px;
+      font-family: var(--font-mono); font-size: 11px; font-weight: 600;
+      letter-spacing: 0.04em; transition: all 0.2s; white-space: nowrap;
+    }
+    .header-cta:hover { background: var(--accent); color: white; }
+    @media (max-width: 900px) { .nav { display: none; } }
+
+    /* HERO INSTAGRAM-STYLE */
+    .hero-ig {
+      position: relative; width: 100%; min-height: 100vh; overflow: hidden;
+    }
+    .hero-ig-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.2), rgba(240,247,255,0.7));
+      z-index: 1;
+    }
+    .hero-ig-inner {
+      position: relative; z-index: 2;
+      display: flex; justify-content: center; align-items: flex-start;
+      min-height: 100vh; padding: 60px 16px 40px;
+    }
+    .ig-card {
+      width: 100%; max-width: 540px;
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 20px; box-shadow: var(--shadow-card);
+      padding: 28px; overflow: hidden;
+    }
+    .ig-header { display: flex; align-items: center; gap: 24px; margin-bottom: 22px; }
+    .ig-avatar {
+      flex-shrink: 0; width: 96px; height: 96px; border-radius: 50%; padding: 3px;
+      background: linear-gradient(45deg, #FBBF24, #F97316, #E63946);
+    }
+    .ig-avatar div {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: linear-gradient(135deg, #FEF3C7, #FBBF24);
+      border: 3px solid var(--bg-card);
+      display: flex; align-items: center; justify-content: center; font-size: 42px;
+    }
+    .ig-info { flex: 1; }
+    .ig-top { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+    .ig-username { font-size: 20px; font-weight: 700; }
+    .ig-follow {
+      padding: 7px 18px; border-radius: 8px; background: var(--accent); color: #fff;
+      font-size: 13px; font-weight: 700; transition: transform .2s;
+    }
+    .ig-follow:hover { transform: translateY(-2px); }
+    .ig-stats {
+      display: flex; gap: 22px; margin-bottom: 12px; font-size: 14px; color: var(--text-muted);
+    }
+    .ig-stats strong { color: var(--text); }
+    .ig-bio { font-size: 14px; line-height: 1.5; }
+    .ig-name { font-weight: 700; margin-bottom: 4px; }
+    .ig-link { color: var(--accent); font-weight: 700; display: inline-block; margin-top: 6px; }
+    .ig-highlights {
+      display: flex; gap: 18px; padding: 18px 0;
+      border-top: 1px solid var(--border); margin-top: 18px; overflow-x: auto;
+    }
+    .ig-highlight { text-align: center; flex-shrink: 0; }
+    .ig-highlight span {
+      display: flex; align-items: center; justify-content: center;
+      width: 60px; height: 60px; border-radius: 50%;
+      background: var(--bg-elev); border: 1px solid var(--border);
+      font-size: 24px; margin-bottom: 6px;
+    }
+    .ig-highlight small { font-size: 12px; color: var(--text-muted); }
+    .ig-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 12px;
+    }
+    .ig-tile {
+      aspect-ratio: 1; border-radius: 4px;
+      background: linear-gradient(135deg, #BFDBFE, #F97316);
+      display: flex; align-items: center; justify-content: center; font-size: 32px;
+    }
+    .ig-tile:nth-child(even) { background: linear-gradient(135deg, #FBBF24, #E63946); }
+    @media (max-width: 600px) {
+      .ig-header { gap: 16px; }
+      .ig-avatar { width: 76px; height: 76px; }
+      .ig-avatar div { font-size: 34px; }
+      .ig-username { font-size: 17px; }
+      .ig-stats { gap: 14px; font-size: 13px; }
+      .ig-card { padding: 20px; }
+    }
+
+    /* FOOTER */
+    .site-footer {
+      background: var(--bg-elev); padding: 40px 0; text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    .site-footer p { color: var(--text-muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container">
+      <div class="brand">
+        <span class="brand-emoji">☀️</span>
+        <span class="brand-name">Raio de Sol Pipas</span>
+      </div>
+      <nav class="nav">
+        <a href="#perfil">Perfil</a>
+        <a href="#modelos">Modelos</a>
+        <a href="#contato">Contato</a>
+      </nav>
+      <a class="header-cta" href="https://wa.me/55SEUNUMERO" target="_blank">📲 WhatsApp</a>
+    </div>
+  </header>
+
+  <!-- HERO INSTAGRAM-STYLE -->
+  <section class="hero-ig" id="perfil">
+    <div class="hero-ig-overlay"></div>
+    <div class="hero-ig-inner">
+      <div class="ig-card">
+
+        <!-- Cabeçalho do perfil -->
+        <div class="ig-header">
+          <div class="ig-avatar">
+            <div>☀️</div>
+          </div>
+          <div class="ig-info">
+            <div class="ig-top">
+              <h2 class="ig-username">raiodesolpipas</h2>
+              <a class="ig-follow" href="#contato">Seguir</a>
+            </div>
+            <ul class="ig-stats">
+              <li><strong>238</strong> publicações</li>
+              <li><strong>12,4k</strong> seguidores</li>
+              <li><strong>189</strong> seguindo</li>
+            </ul>
+            <div class="ig-bio">
+              <p class="ig-name">☀️ Raio de Sol Pipas</p>
+              <p>Pipas artesanais feitas à mão 🪁</p>
+              <p>Cores que voam alto e alegram o céu ✨</p>
+              <a class="ig-link" href="https://wa.me/55SEUNUMERO" target="_blank">📲 Peça pelo WhatsApp</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destaques -->
+        <div class="ig-highlights">
+          <div class="ig-highlight"><span>🪁</span><small>Modelos</small></div>
+          <div class="ig-highlight"><span>🎨</span><small>Cores</small></div>
+          <div class="ig-highlight"><span>📦</span><small>Entregas</small></div>
+          <div class="ig-highlight"><span>⭐</span><small>Avaliações</small></div>
+        </div>
+
+        <!-- Grade de fotos -->
+        <div class="ig-grid" id="modelos">
+          <div class="ig-tile">🪁</div>
+          <div class="ig-tile">🌈</div>
+          <div class="ig-tile">🪁</div>
+          <div class="ig-tile">☀️</div>
+          <div class="ig-tile">🪁</div>
+          <div class="ig-tile">🎨</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer" id="contato">
+    <div class="container">
+      <p>☀️ Raio de Sol Pipas — Feito com carinho 🪁</p>
+      <p style="margin-top:8px;">
+        <a class="btn btn-primary" href="https://wa.me/55SEUNUMERO" target="_blank" style="margin-top:12px;">Fale conosco no WhatsApp</a>
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>

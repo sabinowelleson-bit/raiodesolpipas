@@ -821,9 +821,11 @@
           <input class="form-input" id="rs-estoque" type="number"/>
         </div>
         <div class="form-field full" style="margin-bottom:16px">
-          <label>URL da imagem</label>
-          <input class="form-input" id="rs-imagem" type="text" placeholder="https://..."/>
-        </div>
+  <label class="rs-label">FOTO DO PRODUTO</label>
+  <input type="file" id="rs-imagem-arquivo" accept="image/*" />
+  <input type="hidden" id="rs-imagem" />
+  <img id="rs-preview" style="max-width:120px;margin-top:8px;display:none;border-radius:8px" />
+</div>
         <div class="form-field full" style="margin-bottom:16px">
           <label>Descrição</label>
           <textarea class="form-textarea" id="rs-descricao"></textarea>

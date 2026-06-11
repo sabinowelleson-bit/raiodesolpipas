@@ -13,6 +13,9 @@ const WHATSAPP = '5594984361103';
 // Cria o cliente Supabase (a lib vem do <script> no HTML)
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Expõe como _supabase para o script de auth do admin
+window._supabase = sb;
+
 // ---------- Helpers ----------
 function formatarPreco(valor) {
   return Number(valor).toLocaleString('pt-BR', {
@@ -72,6 +75,21 @@ async function adicionarProduto(produto, arquivoFoto) {
 function initAdmin() {
   const form = document.getElementById('rs-form-produto');
   if (!form) return;
+
+  // ---------- VERIFICAÇÃO DE SESSÃO ----------
+  const loginOverlay = document.getElementById('login-overlay');
+  if (loginOverlay) {
+    sb.auth.getSession().then(function({ data }) {
+      if (data && data.session) {
+        loginOverlay.classList.add('hidden');
+        const nameEl = document.querySelector('.sidebar-user .name');
+        if (nameEl && data.session.user) {
+          nameEl.textContent = data.session.user.email.split('@')[0];
+        }
+      }
+    });
+  }
+  // -------------------------------------------
 
   const tabela = document.getElementById('rs-tabela-produtos');
   const inputArquivo = document.getElementById('rs-imagem-arquivo');

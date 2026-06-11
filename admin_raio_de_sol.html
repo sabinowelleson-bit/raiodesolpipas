@@ -723,9 +723,114 @@
       color: var(--text);
       margin-bottom: 6px;
     }
+
+    /* ========== TELA DE LOGIN ========== */
+    #login-overlay {
+      position: fixed;
+      inset: 0;
+      background: #0B1E3F;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    #login-overlay.hidden { display: none; }
+    .login-card {
+      background: #0f2850;
+      border: 1px solid rgba(202,220,252,0.12);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5);
+    }
+    .login-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .login-logo img { height: 64px; }
+    .login-title {
+      color: #CADCFC;
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 24px;
+      letter-spacing: 0.02em;
+    }
+    .login-field { margin-bottom: 16px; }
+    .login-field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(202,220,252,0.6);
+      margin-bottom: 6px;
+    }
+    .login-field input {
+      width: 100%;
+      background: rgba(202,220,252,0.06);
+      border: 1px solid rgba(202,220,252,0.15);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #CADCFC;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .login-field input:focus {
+      outline: none;
+      border-color: rgba(202,220,252,0.5);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: #3b82f6;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .login-btn:hover { background: #2563eb; }
+    .login-btn:disabled { background: #1e3a5f; cursor: not-allowed; }
+    .login-error {
+      color: #f87171;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
   </style>
 </head>
 <body>
+
+  <!-- =================== LOGIN OVERLAY =================== -->
+  <div id="login-overlay">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATwAAACWCAYAAABD9TQ6AACqGUlEQVR42uy9bRBVV5b+u/c55wCCCoiAKIiCiIiIiMhLd5MXYUxyE23tJEmPcS5REAAAAABJ" alt="Raio de Sol Pipas"/>
+      </div>
+      <div class="login-title">Painel Admin — Raio de Sol Pipas</div>
+      <div class="login-field">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" autocomplete="username"/>
+      </div>
+      <div class="login-field">
+        <label>Senha</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button class="login-btn" id="login-btn" onclick="rsAdminLogin()">Entrar</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
 
   <div class="admin-layout">
 
@@ -1493,6 +1598,68 @@
   <!-- Supabase + app.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
+
+
+  <!-- Auth Script -->
+  <script>
+    // Aguarda o Supabase estar disponível (carregado pelo app.js)
+    async function rsAdminLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-btn');
+      const errEl = document.getElementById('login-error');
+
+      if (!email || !password) {
+        errEl.textContent = 'Preencha e-mail e senha.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+      errEl.textContent = '';
+
+      try {
+        // _supabase é exposto pelo app.js
+        const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        document.getElementById('login-overlay').classList.add('hidden');
+        // Atualiza o nome exibido na sidebar
+        const nameEl = document.querySelector('.sidebar-user .name');
+        if (nameEl) nameEl.textContent = data.user.email.split('@')[0];
+      } catch(err) {
+        errEl.textContent = err.message || 'E-mail ou senha incorretos.';
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
+    }
+
+    // Logout
+    document.querySelectorAll('.logout-btn').forEach(function(el) {
+      el.addEventListener('click', async function() {
+        if (!_supabase) return;
+        await _supabase.auth.signOut();
+        document.getElementById('login-overlay').classList.remove('hidden');
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-error').textContent = '';
+      });
+    });
+
+    // Enter no campo de senha
+    document.addEventListener('DOMContentLoaded', function() {
+      const pwdInput = document.getElementById('login-password');
+      if (pwdInput) {
+        pwdInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') rsAdminLogin();
+        });
+      }
+      const emailInput = document.getElementById('login-email');
+      if (emailInput) {
+        emailInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') document.getElementById('login-password').focus();
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>

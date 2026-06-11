@@ -1489,26 +1489,11 @@
         else if (txt === 'NOVO') o.classList.add('new');
       }));
     });
-        <script src="app.js"></script>
+  </script>
 
-    <script>
-      document.getElementById('rs-imagem-arquivo').addEventListener('change', function (e) {
-        const arquivo = e.target.files[0];
-        if (!arquivo) return;
-
-        const leitor = new FileReader();
-        leitor.onload = function (event) {
-          const preview = document.getElementById('rs-preview');
-          const campoHidden = document.getElementById('rs-imagem');
-
-          preview.src = event.target.result;          // mostra a imagem
-          preview.style.display = 'block';            // tira o display:none
-          campoHidden.value = event.target.result;    // guarda o base64 pra salvar
-        };
-        leitor.readAsDataURL(arquivo);
-      });
-    </script>
+  <!-- Supabase + app.js -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js"></script>
 
 </body>
 </html>
-

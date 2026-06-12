@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="b">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A8D0F5" />
+  <title id="page-title">Catálogo — Raio de Sol Pipas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+
+  <style>
+    /* RESET */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    img, svg { display: block; max-width: 100%; }
+    button { cursor: pointer; border: 0; background: transparent; font-family: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: #FFFFFF;
+      color: #0B1E3F;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* CSS VARS */
+    :root {
+      --bg: #FFFFFF;
+      --bg-elev: #F0F7FF;
+      --bg-card: #FFFFFF;
+      --bg-overlay: rgba(255, 255, 255, 0.88);
+      --border: #DCEAFC;
+      --border-strong: #B8D4F0;
+      --text: #0B1E3F;
+      --text-muted: #4A6584;
+      --text-dim: #8AA0BC;
+      --accent: #3B82F6;
+      --accent-2: #FBBF24;
+      --accent-3: #DC2626;
+      --accent-soft: rgba(59, 130, 246, 0.08);
+      --success: #10B981;
+      --font-display: 'Anton', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow-card: 0 10px 40px -10px rgba(59, 130, 246, 0.18);
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+    @media (max-width: 640px) { .container { padding: 0 16px; } }
+
+    /* HEADER */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-overlay);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 72px;
+    }
+    .site-header .container {
+      height: 100%;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; }
+    .brand-logo { height: 56px; width: auto; transition: transform 0.3s ease; }
+    .brand:hover .brand-logo { transform: rotate(-3deg) scale(1.02); }
+    .brand-logo-dark { display: none; }
+    .nav { display: flex; align-items: center; gap: 28px; }
+    .nav a {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted); transition: color 0.2s;
+    }
+    .nav a:hover, .nav a.active { color: var(--accent); }
+    .header-actions { display: flex; align-items: center; gap: 10px; }
+    .icon-btn {
+      width: 40px; height: 40px; border-radius: 50%;
+      border: 1px solid var(--border); color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .header-cta {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      font-size: 13px; font-weight: 600; color: var(--text-muted);
+      transition: all 0.2s;
+    }
+    .header-cta:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+    .badge {
+      position: absolute; top: -5px; right: -5px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--accent-3); color: white;
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    @media (max-width: 860px) {
+      .nav { display: none; }
+    }
+
+    /* BREADCRUMB */
+    .breadcrumb {
+      padding: 16px 0 0;
+      display: flex; align-items: center; gap: 8px;
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-dim);
+    }
+    .breadcrumb a { color: var(--accent); transition: opacity 0.2s; }
+    .breadcrumb a:hover { opacity: 0.7; }
+    .breadcrumb-sep { color: var(--border-strong); }
+
+    /* PAGE HEADER */
+    .page-header {
+      padding: 24px 0 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-header h1 {
+      font-family: var(--font-display);
+      font-size: clamp(32px, 5vw, 52px);
+      letter-spacing: -0.01em;
+      color: var(--text);
+      line-height: 1;
+    }
+    .page-header-meta {
+      margin-top: 8px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* FILTERS BAR */
+    .filters-bar {
+      padding: 20px 0;
+      display: flex; align-items: center; gap: 10px;
+      flex-wrap: wrap;
+    }
+    .filter-label {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-dim); margin-right: 4px;
+    }
+    .filter-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 999px;
+      border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 11px;
+      font-weight: 600; letter-spacing: 0.04em;
+      color: var(--text-muted);
+      background: var(--bg-card);
+      transition: all 0.2s; cursor: pointer;
+      white-space: nowrap;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active {
+      background: var(--accent); border-color: var(--accent);
+      color: white;
+    }
+    .filter-chip .chip-count {
+      font-size: 10px; opacity: 0.7;
+    }
+    .filters-divider {
+      width: 1px; height: 24px; background: var(--border);
+      margin: 0 4px;
+    }
+    .sort-select {
+      margin-left: auto;
+      padding: 8px 14px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono); font-size: 11px;
+      font-weight: 600; color: var(--text-muted);
+      background: var(--bg-card); cursor: pointer;
+      transition: border-color 0.2s;
+    }
+    .sort-select:focus { outline: none; border-color: var(--accent); }
+
+    /* CATALOG GRID */
+    .catalog-section { padding: 8px 0 80px; }
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+    }
+    @media (max-width: 1100px) { .catalog-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 720px)  { .catalog-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
+
+    /* PRODUCT CARD */
+    .cat-card-mini {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.25s ease;
+      cursor: pointer;
+    }
+    .cat-card-mini:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-card);
+      border-color: var(--accent);
+    }
+    .cat-card-mini-media {
+      position: relative;
+      aspect-ratio: 1;
+      overflow: hidden;
+      background: var(--bg-elev);
+    }
+    .cat-card-mini-media img {
+      width: 100%; height: 100%; object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    .cat-card-mini:hover .cat-card-mini-media img { transform: scale(1.06); }
+    .badge-pill {
+      position: absolute; top: 10px; left: 10px;
+      padding: 4px 10px; border-radius: 999px;
+      font-family: var(--font-mono); font-size: 10px;
+      font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      z-index: 2;
+    }
+    .badge-pill.promo { background: var(--accent-3); color: white; }
+    .badge-pill.novo  { background: var(--accent); color: white; }
+    .cat-card-mini-body { padding: 14px; }
+    .cat-card-mini-cat {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 4px;
+    }
+    .cat-card-mini-body h3 {
+      font-family: var(--font-display);
+      font-size: 14px; font-weight: 600;
+      line-height: 1.25; letter-spacing: -0.005em;
+      color: var(--text); min-height: 36px;
+    }
+    .cat-card-mini-foot {
+      margin-top: 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .cat-card-mini-foot .price {
+      font-family: var(--font-display);
+      font-size: 18px; font-weight: 700;
+      letter-spacing: -0.01em; color: var(--text);
+    }
+    .cat-card-mini-foot .price-original {
+      font-size: 12px; color: var(--text-dim);
+      text-decoration: line-through; margin-left: 6px;
+    }
+    .add-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--accent); color: white;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      box-shadow: 0 4px 10px -2px rgba(59,130,246,0.4);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+    .add-btn:hover { transform: scale(1.1); background: var(--text); }
+    .add-btn svg { width: 16px; height: 16px; fill: white; }
+
+    /* EMPTY / LOADING STATES */
+    .state-message {
+      grid-column: 1 / -1;
+      text-align: center; padding: 60px 24px;
+      color: var(--text-muted);
+      font-family: var(--font-mono); font-size: 13px;
+    }
+    .state-message strong {
+      display: block; font-family: var(--font-display);
+      font-size: 24px; color: var(--text); margin-bottom: 8px;
+    }
+
+    /* RESULTS COUNT */
+    .results-count {
+      padding: 0 0 16px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-dim);
+    }
+    .results-count span { color: var(--text); font-weight: 700; }
+
+    /* FOOTER */
+    .site-footer {
+      background: var(--bg-elev);
+      border-top: 1px solid var(--border);
+      padding: 60px 0 40px;
+    }
+    .footer-grid {
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 40px; margin-bottom: 40px;
+    }
+    @media (max-width: 800px) { .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+    .footer-brand .footer-about {
+      font-size: 14px; line-height: 1.6;
+      color: var(--text-muted); max-width: 380px; margin: 16px 0 16px;
+    }
+    .footer-brand .footer-contact {
+      font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--text-muted);
+    }
+    .footer-col h4 {
+      font-family: var(--font-mono); font-size: 11px;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 18px;
+    }
+    .footer-col ul li { margin-bottom: 10px; }
+    .footer-col a { font-size: 14px; color: var(--text-muted); transition: color 0.2s; }
+    .footer-col a:hover { color: var(--accent); }
+    .footer-bottom {
+      padding-top: 24px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .footer-bottom .copy {
+      font-family: var(--font-mono); font-size: 11px;
+      color: var(--text-dim); letter-spacing: 0.04em;
+    }
+    .footer-social { display: flex; gap: 10px; }
+    .footer-social a {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .footer-social a:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+    /* WHATSAPP FLOAT */
+    .wa-float {
+      position: fixed; bottom: 24px; right: 24px;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #25D366; color: white;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px -6px rgba(37, 211, 102, 0.6);
+      z-index: 50; transition: all 0.3s ease;
+    }
+    .wa-float:hover { transform: scale(1.1); }
+
+    /* ANIMATIONS */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cat-card-mini { animation: fade-up 0.4s ease backwards; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
+        <!-- logo inline do index.html -->
+        <img src="logo_light.png" alt="Raio de Sol Pipas" class="brand-logo brand-logo-light" onerror="this.style.display='none'"/>
+        <span style="font-family:'Anton',sans-serif;font-size:22px;color:#3B82F6;letter-spacing:-0.02em;">RAIO DE SOL<br><span style="color:#0B1E3F;font-size:14px;letter-spacing:0.08em;">PIPAS</span></span>
+      </a>
+
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="catalogo.html?cat=Pipas" id="nav-pipas">Pipas</a>
+        <a href="catalogo.html?cat=Linhas" id="nav-linhas">Linhas</a>
+        <a href="catalogo.html?cat=Carretilhas" id="nav-carretilhas">Carretilhas</a>
+        <a href="catalogo.html?cat=Acessórios" id="nav-acessorios">Acessórios</a>
+        <a href="catalogo.html?cat=Kits" id="nav-kits">Kits</a>
+        <a href="index.html#sobre">Sobre</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="https://instagram.com/raiodesolpipas" class="icon-btn" aria-label="Instagram" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+        </a>
+        <a href="#" class="header-cta" aria-label="Acompanhar Pedido">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          Acompanhar pedido
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+
+      <!-- BREADCRUMB -->
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="index.html">Home</a>
+        <span class="breadcrumb-sep">›</span>
+        <span id="breadcrumb-cat">Catálogo</span>
+      </nav>
+
+      <!-- PAGE HEADER -->
+      <div class="page-header">
+        <h1 id="cat-title">Catálogo</h1>
+        <p class="page-header-meta" id="cat-subtitle">Todos os produtos da loja</p>
+      </div>
+
+      <!-- FILTERS BAR -->
+      <div class="filters-bar" id="filters-bar">
+        <span class="filter-label">Filtrar:</span>
+        <button class="filter-chip active" data-cat="">Todos</button>
+        <button class="filter-chip" data-cat="Pipas">Pipas</button>
+        <button class="filter-chip" data-cat="Linhas">Linhas</button>
+        <button class="filter-chip" data-cat="Carretilhas">Carretilhas</button>
+        <button class="filter-chip" data-cat="Acessórios">Acessórios</button>
+        <button class="filter-chip" data-cat="Kits">Kits</button>
+        <div class="filters-divider"></div>
+        <select class="sort-select" id="sort-select">
+          <option value="newest">Mais recentes</option>
+          <option value="price_asc">Menor preço</option>
+          <option value="price_desc">Maior preço</option>
+        </select>
+      </div>
+
+      <!-- RESULTS COUNT -->
+      <p class="results-count" id="results-count"></p>
+
+      <!-- CATALOG GRID -->
+      <section class="catalog-section">
+        <div class="catalog-grid" id="cat-grid">
+          <div class="state-message">
+            <strong>Carregando...</strong>
+            Buscando produtos no catálogo
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
+            <span style="font-family:'Anton',sans-serif;font-size:20px;color:#3B82F6;">RAIO DE SOL PIPAS</span>
+          </a>
+          <p class="footer-about">
+            Loja oficial de pipas, linhas e acessórios em Redenção-PA.
+            Catálogo completo com envio para todo o Brasil.
+          </p>
+          <div class="footer-contact">
+            contato@raiodesolpipas.com.br<br/>
+            (94) 98436-1103
+          </div>
+        </div>
+        <div class="footer-col">
+          <h4>Categorias</h4>
+          <ul>
+            <li><a href="catalogo.html?cat=Pipas">Pipas</a></li>
+            <li><a href="catalogo.html?cat=Linhas">Linhas</a></li>
+            <li><a href="catalogo.html?cat=Carretilhas">Carretilhas</a></li>
+            <li><a href="catalogo.html?cat=Acessórios">Acessórios</a></li>
+            <li><a href="catalogo.html?cat=Kits">Kits</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Institucional</h4>
+          <ul>
+            <li><a href="index.html#sobre">Sobre a loja</a></li>
+            <li><a href="#">Contato</a></li>
+            <li><a href="#">Frete e entrega</a></li>
+            <li><a href="#">Trocas e devoluções</a></li>
+            <li><a href="#" style="opacity:0.5;font-size:11px;">Painel do dono →</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span class="copy">© 2026 Raio de Sol Pipas · Todos os direitos reservados</span>
+        <div class="footer-social">
+          <a href="https://instagram.com/raiodesolpipas" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="https://wa.me/5594984361103" aria-label="WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp float -->
+  <a href="https://wa.me/5594984361103" class="wa-float" aria-label="Falar no WhatsApp">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+  </a>
+
+  <!-- Supabase + lógica do catálogo -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  (function() {
+    // ---- CONFIG ----
+    var SUPABASE_URL  = 'https://kscqoczfdtoanjdoidtl.supabase.co';
+    var SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3FvY3pmZHRvYW5qZG9pZHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTQ3NjIsImV4cCI6MjA5NjY5MDc2Mn0.xI0Y2tNGls4Rj_jpbvixadWCb6asFU0jAyDL4G_TSDA';
+    var WHATSAPP      = '5594984361103';
+
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ---- ESTADO ----
+    var todosOsProdutos = [];
+    var categoriaAtiva  = '';
+    var ordemAtiva      = 'newest';
+
+    // ---- HELPERS ----
+    function formatarPreco(v) {
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function linkWA(p) {
+      var txt = 'Olá! Vi o site e tenho interesse em ' + p.nome + ' (' + formatarPreco(p.preco_promo || p.preco) + '). Pode me passar mais detalhes?';
+      return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(txt);
+    }
+
+    // ---- RENDER ----
+    function gerarCard(p, idx) {
+      var temPromo = p.preco_promo && p.preco_promo < p.preco;
+      var precoAtual = temPromo ? p.preco_promo : p.preco;
+      var foto = p.imagem_url || 'https://via.placeholder.com/400x400/F0F7FF/8AA0BC?text=' + encodeURIComponent(p.nome);
+
+      var badgeHTML = '';
+      if (temPromo) badgeHTML = '<span class="badge-pill promo">Promoção</span>';
+      else if (p.badge) badgeHTML = '<span class="badge-pill novo">' + p.badge + '</span>';
+
+      var precoOriginalHTML = '';
+      if (temPromo) precoOriginalHTML = '<span class="price-original">' + formatarPreco(p.preco) + '</span>';
+
+      return '<article class="cat-card-mini" style="animation-delay:' + (idx * 0.05) + 's">' +
+        '<div class="cat-card-mini-media">' +
+          badgeHTML +
+          '<img src="' + foto + '" alt="' + p.nome + '" loading="lazy"/>' +
+        '</div>' +
+        '<div class="cat-card-mini-body">' +
+          '<span class="cat-card-mini-cat">' + (p.categoria || 'Produto') + '</span>' +
+          '<h3>' + p.nome + '</h3>' +
+          '<div class="cat-card-mini-foot">' +
+            '<div>' +
+              '<span class="price">' + formatarPreco(precoAtual) + '</span>' +
+              precoOriginalHTML +
+            '</div>' +
+            '<a href="' + linkWA(p) + '" target="_blank" rel="noopener" class="add-btn" title="Comprar pelo WhatsApp" onclick="event.stopPropagation()">' +
+              '<svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>' +
+            '</a>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }
+
+    function filtrarEOrdenar(lista, cat, ordem) {
+      var resultado = cat ? lista.filter(function(p) { return p.categoria === cat; }) : lista.slice();
+      if (ordem === 'price_asc') {
+        resultado.sort(function(a, b) { return (a.preco_promo || a.preco) - (b.preco_promo || b.preco); });
+      } else if (ordem === 'price_desc') {
+        resultado.sort(function(a, b) { return (b.preco_promo || b.preco) - (a.preco_promo || a.preco); });
+      }
+      // newest: manter a ordem do banco (created_at DESC já aplicado na query)
+      return resultado;
+    }
+
+    function renderizar() {
+      var grid = document.getElementById('cat-grid');
+      var countEl = document.getElementById('results-count');
+      var filtrado = filtrarEOrdenar(todosOsProdutos, categoriaAtiva, ordemAtiva);
+
+      if (filtrado.length === 0) {
+        var nomeCat = categoriaAtiva || 'esta categoria';
+        grid.innerHTML = '<div class="state-message"><strong>Nenhum produto</strong>Ainda não temos produtos em ' + nomeCat + '. Em breve!</div>';
+        if (countEl) countEl.innerHTML = '';
+        return;
+      }
+
+      grid.innerHTML = filtrado.map(gerarCard).join('');
+
+      if (countEl) {
+        countEl.innerHTML = '<span>' + filtrado.length + '</span> produto' + (filtrado.length !== 1 ? 's' : '') + ' encontrado' + (filtrado.length !== 1 ? 's' : '');
+      }
+    }
+
+    function atualizarUI(cat) {
+      // Breadcrumb + título
+      var breadcrumbCat = document.getElementById('breadcrumb-cat');
+      var catTitle      = document.getElementById('cat-title');
+      var catSubtitle   = document.getElementById('cat-subtitle');
+      var pageTitle     = document.getElementById('page-title');
+
+      if (cat) {
+        if (breadcrumbCat) breadcrumbCat.textContent = cat;
+        if (catTitle) catTitle.textContent = cat;
+        if (catSubtitle) catSubtitle.textContent = 'Todos os produtos da categoria ' + cat;
+        if (pageTitle) pageTitle.textContent = cat + ' — Raio de Sol Pipas';
+      } else {
+        if (breadcrumbCat) breadcrumbCat.textContent = 'Catálogo';
+        if (catTitle) catTitle.textContent = 'Catálogo completo';
+        if (catSubtitle) catSubtitle.textContent = 'Todos os produtos da loja';
+        if (pageTitle) pageTitle.textContent = 'Catálogo — Raio de Sol Pipas';
+      }
+
+      // Highlight nav link
+      var navMap = { 'Pipas': 'nav-pipas', 'Linhas': 'nav-linhas', 'Carretilhas': 'nav-carretilhas', 'Acessórios': 'nav-acessorios', 'Kits': 'nav-kits' };
+      Object.values(navMap).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      if (cat && navMap[cat]) {
+        var activeEl = document.getElementById(navMap[cat]);
+        if (activeEl) activeEl.classList.add('active');
+      }
+
+      // Highlight filter chip
+      document.querySelectorAll('.filter-chip').forEach(function(chip) {
+        chip.classList.toggle('active', chip.dataset.cat === cat);
+      });
+    }
+
+    // ---- INIT ----
+    async function init() {
+      // Ler ?cat= da URL
+      var params = new URLSearchParams(window.location.search);
+      categoriaAtiva = params.get('cat') || '';
+
+      atualizarUI(categoriaAtiva);
+
+      // Buscar todos os produtos ativos do banco
+      var { data, error } = await sb
+        .from('produtos')
+        .select('*')
+        .eq('ativo', true)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        document.getElementById('cat-grid').innerHTML =
+          '<div class="state-message"><strong>Erro ao carregar</strong>Não foi possível buscar os produtos. Tente novamente.</div>';
+        return;
+      }
+
+      todosOsProdutos = data || [];
+      renderizar();
+    }
+
+    // ---- EVENTOS DOS FILTROS ----
+    document.addEventListener('DOMContentLoaded', function() {
+      init();
+
+      // Chips de categoria
+      document.querySelectorAll('.filter-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          categoriaAtiva = this.dataset.cat;
+          atualizarUI(categoriaAtiva);
+          renderizar();
+          // Atualizar URL sem recarregar
+          var newUrl = categoriaAtiva
+            ? window.location.pathname + '?cat=' + encodeURIComponent(categoriaAtiva)
+            : window.location.pathname;
+          window.history.replaceState(null, '', newUrl);
+        });
+      });
+
+      // Ordenação
+      var sortSel = document.getElementById('sort-select');
+      if (sortSel) {
+        sortSel.addEventListener('change', function() {
+          ordemAtiva = this.value;
+          renderizar();
+        });
+      }
+    });
+
+  })();
+  </script>
+
+</body>
+</html>

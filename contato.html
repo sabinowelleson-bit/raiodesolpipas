@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A8D0F5" />
+  <title>Contato — Raio de Sol Pipas</title>
+  <meta name="description" content="Entre em contato com a Raio de Sol Pipas via WhatsApp (94) 98436-1103 ou Instagram @raiodesolpipas. Atendimento personalizado e envio para todo o Brasil."/>
+  <meta property="og:title" content="Fale com a Raio de Sol Pipas"/>
+  <meta property="og:description" content="Entre em contato com a Raio de Sol Pipas via WhatsApp (94) 98436-1103 ou Instagram @raiodesolpipas. Atendimento personalizado e envio para todo o Brasil."/>
+  <meta property="og:image" content="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png"/>
+  <meta property="og:url" content="https://raiodesolpipas.com.br/contato.html"/>
+  <meta property="og:type" content="website"/>
+  <meta property="og:locale" content="pt_BR"/>
+
+  <link rel="icon" type="image/x-icon" href="favicon.ico"/>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png"/>
+  <link rel="apple-touch-icon" href="favicon-192.png"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    img, svg { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    :root {
+      --bg: #FFFFFF;
+      --bg-elev: #F0F7FF;
+      --bg-card: #FFFFFF;
+      --border: #DCEAFC;
+      --border-strong: #B8D4F0;
+      --text: #0B1E3F;
+      --text-muted: #4A6584;
+      --text-dim: #8AA0BC;
+      --accent: #3B82F6;
+      --accent-2: #FBBF24;
+      --accent-3: #DC2626;
+      --accent-soft: rgba(59, 130, 246, 0.08);
+      --font-display: 'Anton', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow-card: 0 10px 40px -10px rgba(59, 130, 246, 0.18);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: linear-gradient(180deg, #7CB7F0 0%, #A8D0F5 12%, #D6E8F8 28%, #F0F7FF 50%, #FFFFFF 75%, #FFFFFF 100%) no-repeat;
+      background-size: 100% 800px;
+      background-color: #FFFFFF;
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+    @media (max-width: 640px) { .container { padding: 0 16px; } }
+
+    /* HEADER */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255, 255, 255, 0.55);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(11, 30, 63, 0.08);
+    }
+    .header-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 0; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; }
+    .brand img { height: 44px; width: auto; }
+    .header-nav { display: flex; gap: 28px; align-items: center; }
+    .header-nav a {
+      font-family: var(--font-mono); font-size: 12px;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      color: var(--text-muted); transition: color 0.2s;
+    }
+    .header-nav a:hover, .header-nav a.active { color: var(--text); }
+    .header-cta {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; background: var(--text); color: #FFF;
+      border-radius: 999px; font-weight: 700; font-size: 13px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .header-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -10px rgba(11,30,63,0.4); }
+    @media (max-width: 800px) {
+      .header-nav { display: none; }
+    }
+
+    /* BREADCRUMB */
+    .breadcrumb {
+      padding: 24px 0 8px;
+      font-family: var(--font-mono); font-size: 12px;
+      color: var(--text-dim); text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .breadcrumb a { color: var(--text-muted); }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb .sep { margin: 0 8px; opacity: 0.5; }
+
+    /* PAGE HEADER */
+    .page-header {
+      padding: 32px 0 48px;
+    }
+    .page-header h1 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: clamp(40px, 6vw, 72px); line-height: 1;
+      letter-spacing: -0.01em; text-transform: uppercase;
+      color: var(--text); margin-bottom: 12px;
+    }
+    .page-header .lead {
+      font-size: 18px; color: var(--text-muted);
+      max-width: 640px; line-height: 1.6;
+    }
+
+    /* CONTENT */
+    .content {
+      padding-bottom: 80px;
+    }
+    .content-section {
+      max-width: 760px; margin: 0 auto;
+      background: var(--bg-card);
+      padding: 48px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border);
+    }
+    @media (max-width: 640px) {
+      .content-section { padding: 28px 20px; }
+    }
+    .content-section h2 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 28px; text-transform: uppercase;
+      margin-top: 40px; margin-bottom: 16px;
+      color: var(--text); letter-spacing: 0.01em;
+    }
+    .content-section h2:first-child { margin-top: 0; }
+    .content-section h3 {
+      font-size: 16px; font-weight: 700;
+      margin-top: 24px; margin-bottom: 8px;
+      color: var(--text);
+    }
+    .content-section p {
+      font-size: 16px; line-height: 1.7;
+      color: var(--text-muted); margin-bottom: 16px;
+    }
+    .content-section ul {
+      padding-left: 0; margin-bottom: 16px;
+    }
+    .content-section ul li {
+      position: relative; padding-left: 24px;
+      margin-bottom: 10px; line-height: 1.6;
+      color: var(--text-muted);
+    }
+    .content-section ul li::before {
+      content: "→"; position: absolute; left: 0;
+      color: var(--accent); font-weight: 700;
+    }
+    .content-section a {
+      color: var(--accent); border-bottom: 1px solid currentColor;
+      transition: color 0.2s;
+    }
+    .content-section a:hover { color: var(--accent-3); }
+    .content-section strong { color: var(--text); }
+
+    /* HIGHLIGHT CARD */
+    .highlight {
+      background: linear-gradient(135deg, var(--accent-soft) 0%, rgba(251,191,36,0.08) 100%);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 24px 0;
+      border-left: 4px solid var(--accent);
+    }
+    .highlight strong { font-size: 20px; display: block; margin-bottom: 4px; }
+
+    /* CTA */
+    .cta-block {
+      text-align: center;
+      padding: 48px 24px;
+      margin-top: 48px;
+      background: var(--text);
+      color: #FFF;
+      border-radius: var(--radius);
+    }
+    .cta-block h3 {
+      font-family: var(--font-display); font-weight: 400;
+      font-size: 32px; text-transform: uppercase;
+      color: #FFF; margin-bottom: 12px;
+    }
+    .cta-block p { color: rgba(255,255,255,0.7); margin-bottom: 24px; }
+    .cta-block .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 16px 32px; background: #25D366; color: #FFF;
+      border-radius: 999px; font-weight: 700; font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .cta-block .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 40px -10px rgba(37,211,102,0.5);
+    }
+
+    /* FOOTER */
+    .site-footer {
+      background: var(--text); color: #FFF;
+      padding: 64px 0 32px;
+      margin-top: 80px;
+    }
+    .footer-grid {
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+      gap: 48px; margin-bottom: 48px;
+    }
+    @media (max-width: 800px) {
+      .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+    }
+    @media (max-width: 480px) {
+      .footer-grid { grid-template-columns: 1fr; }
+    }
+    .footer-brand img { height: 50px; margin-bottom: 16px; filter: brightness(0) invert(1); }
+    .footer-about { color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 16px; font-size: 14px; }
+    .footer-contact { font-family: var(--font-mono); font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.8; }
+    .footer-col h4 {
+      font-family: var(--font-mono); font-size: 11px;
+      text-transform: uppercase; letter-spacing: 0.1em;
+      color: rgba(255,255,255,0.5); margin-bottom: 20px;
+    }
+    .footer-col ul li { margin-bottom: 12px; }
+    .footer-col a {
+      color: rgba(255,255,255,0.8); font-size: 14px;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: #FFF; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-bottom .copy {
+      font-family: var(--font-mono); font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+    .footer-social { display: flex; gap: 12px; }
+    .footer-social a {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.08);
+      border-radius: 999px;
+      transition: background 0.2s;
+    }
+    .footer-social a:hover { background: rgba(255,255,255,0.2); }
+
+    /* WHATSAPP FLOAT */
+    .wa-float {
+      position: fixed; bottom: 24px; right: 24px; z-index: 90;
+      width: 56px; height: 56px; border-radius: 50%;
+      background: #25D366; color: #FFF;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(37,211,102,0.4);
+      transition: transform 0.2s;
+    }
+    .wa-float:hover { transform: scale(1.1); }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
+        <img src="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png" alt="Raio de Sol Pipas"/>
+      </a>
+      <nav class="header-nav">
+        <a href="catalogo.html?cat=Pipas">Pipas</a>
+        <a href="catalogo.html?cat=Linhas">Linhas</a>
+        <a href="catalogo.html?cat=Carretilhas">Carretilhas</a>
+        <a href="catalogo.html?cat=Acessórios">Acessórios</a>
+        <a href="catalogo.html?cat=Kits">Kits</a>
+      </nav>
+      <a href="https://wa.me/5594984361103" class="header-cta">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51"/></svg>
+        Comprar
+      </a>
+    </div>
+  </header>
+
+  <!-- BREADCRUMB -->
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="index.html">Início</a><span class="sep">/</span><span>Contato</span>
+    </div>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="container">
+    <div class="page-header">
+      <h1>Contato</h1>
+      <p class="lead">Fale com a gente pelo WhatsApp, Instagram ou venha conhecer a loja em Redenção-PA.</p>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <div class="container">
+      <div class="content-section">
+        
+<h2>Atendimento via WhatsApp</h2>
+<p>Nossa principal forma de atendimento é pelo <strong>WhatsApp</strong>. Por lá você pode tirar dúvidas, ver disponibilidade de produtos, combinar entrega, pagamento e tudo mais.</p>
+
+<div class="highlight">
+  <strong>(94) 98436-1103</strong>
+  Atendimento personalizado e direto pelo WhatsApp. Clique no botão abaixo pra começar a conversar.
+</div>
+
+<div style="text-align: center; margin: 32px 0;">
+  <a href="https://wa.me/5594984361103" class="btn" style="display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; background: #25D366; color: #FFF; border-radius: 999px; font-weight: 700; font-size: 16px; border-bottom: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51"/></svg>
+    Abrir conversa no WhatsApp
+  </a>
+</div>
+
+<h2>Instagram</h2>
+<p>Acompanhe nossas novidades, lançamentos, lives e a comunidade de clientes através do nosso Instagram <a href="https://instagram.com/raiodesolpipas" target="_blank" rel="noopener">@raiodesolpipas</a> — somos mais de <strong>36 mil seguidores</strong>.</p>
+
+<h2>E-mail</h2>
+<p>Para assuntos formais, parcerias ou contatos comerciais, você também pode nos escrever por e-mail:</p>
+<p><strong><a href="mailto:raiodesolpipas10@gmail.com">raiodesolpipas10@gmail.com</a></strong></p>
+<p style="font-size: 14px; color: var(--text-dim); margin-top: 8px;">Para atendimento de pedidos, o WhatsApp continua sendo o canal mais rápido.</p>
+
+<h2>Localização</h2>
+<p>Nossa loja física fica em <strong>Redenção, Pará</strong>. Se você está na região e quer passar pra ver os produtos pessoalmente, é só nos chamar no WhatsApp pra combinar o melhor horário.</p>
+
+<h2>Horário de atendimento</h2>
+<p>Atendemos no WhatsApp todos os dias, em horário comercial. Para visitas à loja física, recomendamos confirmar o horário com a gente antes pelo WhatsApp.</p>
+
+<h2>Envio para todo o Brasil</h2>
+<p>Enviamos pedidos para todo o território nacional. O frete e o prazo de entrega são calculados de acordo com a sua região e o produto escolhido — combinamos tudo direto pelo WhatsApp.</p>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
+            <img src="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png" alt="Raio de Sol Pipas"/>
+          </a>
+          <p class="footer-about">
+            Loja oficial de pipas, linhas e acessórios em Redenção-PA.
+            Catálogo completo com envio para todo o Brasil.
+          </p>
+          <div class="footer-contact">
+            Redenção - PA<br/>
+            WhatsApp: (94) 98436-1103<br/>
+            raiodesolpipas10@gmail.com
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>Institucional</h4>
+          <ul>
+            <li><a href="sobre.html">Sobre a loja</a></li>
+            <li><a href="contato.html">Contato</a></li>
+            <li><a href="https://wa.me/5594984361103" target="_blank" rel="noopener">Frete e entrega</a></li>
+            <li><a href="https://wa.me/5594984361103" target="_blank" rel="noopener">Trocas e devoluções</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="politica-privacidade.html">Política de privacidade</a></li>
+            <li><a href="termos-uso.html">Termos de uso</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span class="copy">© 2026 Raio de Sol Pipas · Todos os direitos reservados</span>
+        <div class="footer-social">
+          <a href="https://instagram.com/raiodesolpipas" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+          <a href="https://wa.me/5594984361103" aria-label="WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- WhatsApp Floating Button -->
+  <a href="https://wa.me/5594984361103" class="wa-float" aria-label="Falar no WhatsApp">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+  </a>
+
+</body>
+</html>

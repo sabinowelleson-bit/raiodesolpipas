@@ -187,7 +187,7 @@ function initAdmin() {
 // LÓGICA DO SITE
 // ===================================================================
 
-// Gera o HTML de um product-card (mesmo estilo visual do site)
+// Card para seção de destaques (product-card)
 function gerarCardHTML(p) {
   var temPromo = p.preco_promo && p.preco_promo < p.preco;
   var precoAtual = temPromo ? p.preco_promo : p.preco;
@@ -219,6 +219,41 @@ function gerarCardHTML(p) {
   '</article>';
 }
 
+// Card para catálogo (cat-card-mini)
+function gerarCatCardHTML(p) {
+  var foto = p.imagem_url || 'https://via.placeholder.com/400x400?text=Raio+de+Sol+Pipas';
+  var temPromo = p.preco_promo && p.preco_promo < p.preco;
+  var precoAtual = temPromo ? p.preco_promo : p.preco;
+
+  return '<article class="cat-card-mini">' +
+    '<div class="cat-card-mini-media">' +
+      '<img src="' + foto + '" alt="' + p.nome + '" loading="lazy"/>' +
+    '</div>' +
+    '<div class="cat-card-mini-body">' +
+      '<span class="cat-card-mini-cat">' + (p.categoria || 'Produto') + '</span>' +
+      '<h3>' + p.nome + '</h3>' +
+      '<div class="cat-card-mini-foot">' +
+        '<span class="price">' + formatarPreco(precoAtual) + '</span>' +
+        '<a href="' + linkWhatsApp(p) + '" target="_blank" rel="noopener" class="add-btn" title="Comprar pelo WhatsApp">' +
+          '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24z"/></svg>' +
+        '</a>' +
+      '</div>' +
+    '</div>' +
+  '</article>';
+}
+
+// Atualiza contadores com o total real de produtos
+function atualizarContadores(total) {
+  var el1 = document.getElementById('rs-total-produtos');
+  if (el1) el1.textContent = total;
+
+  var el2 = document.getElementById('rs-total-catalogo');
+  if (el2) el2.textContent = total;
+
+  var el3 = document.getElementById('rs-about-total');
+  if (el3) el3.textContent = total + '+';
+}
+
 async function initSite() {
   // --- TOP 4 DESTAQUES (seção "Os mais vendidos") ---
   var containerDestaques = document.getElementById('rs-lista-produtos');
@@ -232,15 +267,19 @@ async function initSite() {
     }
   }
 
-  // --- CATÁLOGO COMPLETO (se existir o container rs-catalogo) ---
+  // --- CATÁLOGO COMPLETO ---
   var containerCatalogo = document.getElementById('rs-catalogo');
   if (containerCatalogo) {
     var todos = await getProdutos({ somenteAtivos: true });
+
+    // Atualiza contadores
+    atualizarContadores(todos.length);
+
     if (todos.length === 0) {
       containerCatalogo.innerHTML =
         '<p style="grid-column:1/-1;text-align:center;padding:40px;color:#64748B">Catálogo em atualização. Volte em breve!</p>';
     } else {
-      containerCatalogo.innerHTML = todos.map(gerarCardHTML).join('');
+      containerCatalogo.innerHTML = todos.map(gerarCatCardHTML).join('');
     }
   }
 }

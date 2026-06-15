@@ -14,6 +14,9 @@
   <meta property="og:type" content="website"/>
   <meta property="og:locale" content="pt_BR"/>
   <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png"/>
+  <meta name="robots" content="index, follow"/>
+  <link rel="canonical" href="https://raiodesolpipas.com.br/"/>
 
   <link rel="icon" type="image/x-icon" href="favicon.ico"/>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
@@ -1285,22 +1288,24 @@
     /* Decorative product visual on right of banner */
     .cat-banner-visual {
       position: absolute;
-      right: 80px;
+      right: 56px;
       top: 50%;
       transform: translateY(-50%);
-      width: 220px;
+      width: 300px;
       height: 100%;
       pointer-events: none;
-      opacity: 0.8;
+      opacity: 1;
       display: flex;
       align-items: center;
+      justify-content: center;
     }
     @media (max-width: 700px) { .cat-banner-visual { display: none; } }
     .cat-banner-visual svg { width: 100%; height: 100%; }
     .cat-banner-visual img {
-      width: 220px;
-      height: 130px;
-      object-fit: cover;
+      width: 300px;
+      height: 170px;
+      object-fit: contain;
+      background: rgba(255, 255, 255, 0.06);
       border-radius: 12px;
       display: block;
     }

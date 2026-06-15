@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin_raio_de_sol.html
+
+Sitemap: https://raiodesolpipas.com.br/sitemap.xml

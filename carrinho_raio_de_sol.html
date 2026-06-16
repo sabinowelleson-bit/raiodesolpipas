@@ -1093,7 +1093,7 @@ window.Carrinho = (() => {
           }]);
           if (resPedido.error){
             console.error('Erro ao gravar pedido:', resPedido.error);
-            mostrarErro('DEBUG insert: ' + (resPedido.error.message || 'sem mensagem') + ' | code: ' + (resPedido.error.code || 'sem codigo') + ' | details: ' + (resPedido.error.details || '-'));
+            mostrarErro('Não conseguimos registrar seu pedido. Tente novamente em instantes.');
             restaurar();
             return;
           }
@@ -1114,7 +1114,7 @@ window.Carrinho = (() => {
           var pag = await resp.json();
           if (!resp.ok || !pag.url){
             console.error('Erro criar-pagamento:', pag);
-            mostrarErro('DEBUG pagamento: ' + JSON.stringify(pag).slice(0, 300));
+            mostrarErro('Não foi possível gerar o pagamento. Tente novamente em instantes.');
             restaurar();
             return;
           }

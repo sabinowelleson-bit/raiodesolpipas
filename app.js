@@ -31,16 +31,27 @@ function linkWhatsApp(produto) {
 
 // ---------- Funções de dados (Supabase) ----------
 async function getProdutos({ somenteAtivos = true, somenteDestaques = false } = {}) {
-  // Traz o produto + suas variantes (relacionamento pela FK produto_id)
-  let query = sb
-    .from('produtos')
-    .select('*, variantes(*)')
-    .order('created_at', { ascending: false });
+  // 1) Busca os produtos
+  let query = sb.from('produtos').select('*').order('created_at', { ascending: false });
   if (somenteAtivos)    query = query.eq('ativo', true);
   if (somenteDestaques) query = query.eq('destaque', true).limit(4);
   const { data, error } = await query;
   if (error) { console.error('Erro ao buscar produtos:', error); return []; }
-  return data || [];
+  const produtos = data || [];
+
+  // 2) Busca todas as variantes e agrupa por produto_id (query separada = mais confiável que join)
+  const respVar = await sb.from('variantes').select('*');
+  const porProduto = {};
+  if (!respVar.error && respVar.data) {
+    respVar.data.forEach(function (v) {
+      if (!porProduto[v.produto_id]) porProduto[v.produto_id] = [];
+      porProduto[v.produto_id].push(v);
+    });
+  }
+
+  // 3) Anexa as variantes a cada produto
+  produtos.forEach(function (p) { p.variantes = porProduto[p.id] || []; });
+  return produtos;
 }
 
 // Helpers de variação: a partir das variantes de um produto, descobre

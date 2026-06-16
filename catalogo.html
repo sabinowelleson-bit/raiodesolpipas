@@ -642,10 +642,10 @@
 
       atualizarUI(categoriaAtiva);
 
-      // Buscar todos os produtos ativos do banco (com variantes)
+      // 1) Buscar todos os produtos ativos
       var { data, error } = await sb
         .from('produtos')
-        .select('*, variantes(*)')
+        .select('*')
         .eq('ativo', true)
         .order('created_at', { ascending: false });
 
@@ -655,7 +655,24 @@
         return;
       }
 
-      todosOsProdutos = data || [];
+      var produtos = data || [];
+
+      // 2) Buscar TODAS as variantes de uma vez e agrupar por produto_id
+      var respVar = await sb.from('variantes').select('*');
+      var variantesPorProduto = {};
+      if (!respVar.error && respVar.data) {
+        respVar.data.forEach(function(v) {
+          if (!variantesPorProduto[v.produto_id]) variantesPorProduto[v.produto_id] = [];
+          variantesPorProduto[v.produto_id].push(v);
+        });
+      }
+
+      // 3) Anexar as variantes a cada produto
+      produtos.forEach(function(p) {
+        p.variantes = variantesPorProduto[p.id] || [];
+      });
+
+      todosOsProdutos = produtos;
       renderizar();
     }
 

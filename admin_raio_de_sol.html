@@ -855,7 +855,7 @@
         <a class="nav-item" onclick="showView('orders', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           Pedidos
-          <span class="badge">7</span>
+          <span class="badge" id="rs-badge-pedidos">0</span>
         </a>
         <a class="nav-item" onclick="showView('coupons', this)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
@@ -1062,36 +1062,7 @@
               <thead>
                 <tr><th>Pedido</th><th>Cliente</th><th>Total</th><th>Status</th><th></th></tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td><span class="order-id">#1247</span><br/><span style="font-size:11px; color:var(--text-muted)">há 12 min</span></td>
-                  <td><strong>João Silva</strong><br/><span style="font-size:11px; color:var(--text-muted)">Belém-PA</span></td>
-                  <td><strong>R$ 70,74</strong></td>
-                  <td><span class="status pending">Aguardando pagto</span></td>
-                  <td><button class="icon-action" title="Ver detalhes"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></td>
-                </tr>
-                <tr>
-                  <td><span class="order-id">#1246</span><br/><span style="font-size:11px; color:var(--text-muted)">há 2h</span></td>
-                  <td><strong>Maria Santos</strong><br/><span style="font-size:11px; color:var(--text-muted)">Marabá-PA</span></td>
-                  <td><strong>R$ 145,30</strong></td>
-                  <td><span class="status paid">Pago · enviar</span></td>
-                  <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></td>
-                </tr>
-                <tr>
-                  <td><span class="order-id">#1245</span><br/><span style="font-size:11px; color:var(--text-muted)">há 5h</span></td>
-                  <td><strong>Pedro Oliveira</strong><br/><span style="font-size:11px; color:var(--text-muted)">Redenção-PA</span></td>
-                  <td><strong>R$ 32,80</strong></td>
-                  <td><span class="status shipped">Enviado</span></td>
-                  <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></td>
-                </tr>
-                <tr>
-                  <td><span class="order-id">#1244</span><br/><span style="font-size:11px; color:var(--text-muted)">ontem</span></td>
-                  <td><strong>Ana Costa</strong><br/><span style="font-size:11px; color:var(--text-muted)">Tucumã-PA</span></td>
-                  <td><strong>R$ 89,90</strong></td>
-                  <td><span class="status delivered">Entregue</span></td>
-                  <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></button></td>
-                </tr>
-              </tbody>
+              <tbody id="rs-pedidos-recentes"></tbody>
             </table>
           </div>
 
@@ -1417,12 +1388,12 @@
           </div>
         </div>
 
-        <div class="filters-bar">
-          <button class="filter-chip active">Todos <span class="count">42</span></button>
-          <button class="filter-chip">Aguardando pagto <span class="count">7</span></button>
-          <button class="filter-chip">Pagos · enviar <span class="count">5</span></button>
-          <button class="filter-chip">Enviados <span class="count">18</span></button>
-          <button class="filter-chip">Entregues <span class="count">12</span></button>
+        <div class="filters-bar" id="rs-filtros-pedidos">
+          <button class="filter-chip active" data-filtro="todos">Todos <span class="count" id="rs-cnt-todos">0</span></button>
+          <button class="filter-chip" data-filtro="aguardando">Aguardando pagto <span class="count" id="rs-cnt-aguardando">0</span></button>
+          <button class="filter-chip" data-filtro="pago">Pagos · enviar <span class="count" id="rs-cnt-pago">0</span></button>
+          <button class="filter-chip" data-filtro="enviado">Enviados <span class="count" id="rs-cnt-enviado">0</span></button>
+          <button class="filter-chip" data-filtro="entregue">Entregues <span class="count" id="rs-cnt-entregue">0</span></button>
         </div>
 
         <div class="product-table">
@@ -1430,44 +1401,7 @@
             <thead>
               <tr><th>Pedido</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Pagamento</th><th>Status</th><th></th></tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><span class="order-id">#1247</span><br/><span style="font-size:11px; color:var(--text-muted)">28/05 · 14:32</span></td>
-                <td><strong>João Silva</strong><br/><span style="font-size:11px; color:var(--text-muted)">Belém · PA</span></td>
-                <td>3 itens</td>
-                <td><strong>R$ 70,74</strong></td>
-                <td><span style="font-size:12px;">Pix</span></td>
-                <td><span class="status pending">Aguardando pagto</span></td>
-                <td><button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;">Detalhes →</button></td>
-              </tr>
-              <tr>
-                <td><span class="order-id">#1246</span><br/><span style="font-size:11px; color:var(--text-muted)">28/05 · 11:08</span></td>
-                <td><strong>Maria Santos</strong><br/><span style="font-size:11px; color:var(--text-muted)">Marabá · PA</span></td>
-                <td>5 itens</td>
-                <td><strong>R$ 145,30</strong></td>
-                <td><span style="font-size:12px;">Cartão 3x</span></td>
-                <td><span class="status paid">Pago · enviar</span></td>
-                <td><button class="btn-primary" style="padding: 6px 12px; font-size: 11px;">Gerar etiqueta</button></td>
-              </tr>
-              <tr>
-                <td><span class="order-id">#1245</span><br/><span style="font-size:11px; color:var(--text-muted)">28/05 · 09:15</span></td>
-                <td><strong>Pedro Oliveira</strong><br/><span style="font-size:11px; color:var(--text-muted)">Redenção · PA</span></td>
-                <td>2 itens</td>
-                <td><strong>R$ 32,80</strong></td>
-                <td><span style="font-size:12px;">Pix</span></td>
-                <td><span class="status shipped">Enviado · BR123456789</span></td>
-                <td><button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;">Rastrear →</button></td>
-              </tr>
-              <tr>
-                <td><span class="order-id">#1244</span><br/><span style="font-size:11px; color:var(--text-muted)">27/05 · 18:42</span></td>
-                <td><strong>Ana Costa</strong><br/><span style="font-size:11px; color:var(--text-muted)">Tucumã · PA</span></td>
-                <td>4 itens</td>
-                <td><strong>R$ 89,90</strong></td>
-                <td><span style="font-size:12px;">Cartão 1x</span></td>
-                <td><span class="status delivered">Entregue</span></td>
-                <td><button class="btn-secondary" style="padding: 6px 12px; font-size: 11px;">Ver →</button></td>
-              </tr>
-            </tbody>
+            <tbody id="rs-tabela-pedidos"></tbody>
           </table>
         </div>
       </section>
@@ -1583,6 +1517,7 @@
       }
 
       document.getElementById('page-title').textContent = titleOverride || pageTitles[viewName] || 'Admin';
+      if ((viewName === 'orders' || viewName === 'dashboard') && typeof carregarPedidos === 'function') carregarPedidos();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1719,6 +1654,7 @@
         // Atualiza o nome exibido na sidebar
         const nameEl = document.querySelector('.sidebar-user .name');
         if (nameEl) nameEl.textContent = data.user.email.split('@')[0];
+        if (typeof carregarPedidos === 'function') carregarPedidos();
       } catch(err) {
         errEl.textContent = err.message || 'E-mail ou senha incorretos.';
         btn.disabled = false;
@@ -1752,6 +1688,172 @@
         });
       }
     });
+  </script>
+
+  <!-- ============ Pedidos reais (Supabase) ============ -->
+  <script>
+  (function(){
+    var cache = [];
+    var filtro = 'todos';
+
+    function brl(v){ return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+    function dataHora(iso){ try{ return new Date(iso).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ''; } }
+    function statusInfo(s){
+      var m = {
+        aguardando:{label:'Aguardando pagto',cls:'pending'},
+        pago:{label:'Pago \u00b7 enviar',cls:'paid'},
+        enviado:{label:'Enviado',cls:'shipped'},
+        entregue:{label:'Entregue',cls:'delivered'},
+        cancelado:{label:'Cancelado',cls:'delivered'}
+      };
+      return m[s] || {label:(s||'\u2014'),cls:'pending'};
+    }
+    function itensResumo(itens){
+      if(!Array.isArray(itens)||!itens.length) return '0 itens';
+      var n = itens.reduce(function(a,i){return a+(Number(i.qtd)||0);},0);
+      return n + (n===1?' item':' itens');
+    }
+    function itensDetalhe(itens){
+      if(!Array.isArray(itens)||!itens.length) return '<em>sem itens</em>';
+      return itens.map(function(i){
+        var v=[]; if(i.cor)v.push(i.cor); if(i.tamanho)v.push(i.tamanho);
+        var vr = v.length?(' ('+esc(v.join(' \u00b7 '))+')'):'';
+        return '<div>'+(Number(i.qtd)||1)+'\u00d7 '+esc(i.nome)+vr+' \u2014 '+brl((Number(i.preco)||0)*(Number(i.qtd)||1))+'</div>';
+      }).join('');
+    }
+    function sbClient(){ return window._supabase || window.sb || null; }
+
+    function renderFull(){
+      var tb = document.getElementById('rs-tabela-pedidos');
+      if(!tb) return;
+      var lista = (filtro==='todos') ? cache : cache.filter(function(p){ return p.status===filtro; });
+      if(!lista.length){
+        tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">Nenhum pedido'+(filtro==='todos'?' ainda':' nesse status')+'.</td></tr>';
+        return;
+      }
+      tb.innerHTML = lista.map(function(p){
+        var opts = ['aguardando','pago','enviado','entregue','cancelado'].map(function(s){
+          return '<option value="'+s+'"'+(p.status===s?' selected':'')+'>'+statusInfo(s).label+'</option>';
+        }).join('');
+        var pag = p.pagamento_tipo || '\u2014';
+        return ''+
+          '<tr>'+
+            '<td><span class="order-id">#'+esc(p.numero)+'</span><br/><span style="font-size:11px;color:var(--text-muted)">'+dataHora(p.criado_em)+'</span></td>'+
+            '<td><strong>'+esc(p.cliente_nome)+'</strong><br/><span style="font-size:11px;color:var(--text-muted)">'+esc(p.cliente_tel||'')+'</span></td>'+
+            '<td>'+itensResumo(p.itens)+'</td>'+
+            '<td><strong>'+brl(p.total)+'</strong></td>'+
+            '<td><span style="font-size:12px">'+esc(pag)+'</span></td>'+
+            '<td><select class="rs-status-select" data-id="'+esc(p.id)+'" style="font-size:12px;padding:5px 8px;border:1px solid var(--border-strong);border-radius:8px;background:#fff;color:var(--text)">'+opts+'</select></td>'+
+            '<td><button class="btn-secondary rs-ver-detalhe" data-id="'+esc(p.id)+'" style="padding:6px 12px;font-size:11px">Detalhes \u2192</button></td>'+
+          '</tr>'+
+          '<tr class="rs-detalhe" data-id="'+esc(p.id)+'" style="display:none">'+
+            '<td colspan="7" style="background:var(--bg-soft);padding:16px 18px">'+
+              '<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">'+
+                '<div><div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);font-weight:700">Entrega</div>'+
+                  '<div style="margin-top:6px;font-size:13px;line-height:1.6">'+
+                    esc(p.cliente_nome)+'<br/>'+
+                    (p.cliente_tel?esc(p.cliente_tel)+'<br/>':'')+
+                    (p.cliente_email?esc(p.cliente_email)+'<br/>':'')+
+                    (p.cliente_cep?'CEP '+esc(p.cliente_cep)+'<br/>':'')+
+                    esc(p.cliente_end||'')+
+                  '</div>'+
+                '</div>'+
+                '<div><div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);font-weight:700">Itens</div>'+
+                  '<div style="margin-top:6px;font-size:13px;line-height:1.7">'+itensDetalhe(p.itens)+'</div>'+
+                  '<div style="margin-top:8px;font-size:12px;color:var(--text-muted)">Subtotal '+brl(p.subtotal)+' \u00b7 Frete '+brl(p.frete)+(p.frete_tipo?(' ('+esc(p.frete_tipo)+')'):'')+' \u00b7 <strong style="color:var(--text)">Total '+brl(p.total)+'</strong></div>'+
+                  (p.pagamento_id?'<div style="margin-top:6px;font-size:11px;color:var(--text-muted)">Ref: '+esc(p.pagamento_id)+'</div>':'')+
+                '</div>'+
+              '</div>'+
+            '</td>'+
+          '</tr>';
+      }).join('');
+
+      tb.querySelectorAll('.rs-ver-detalhe').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var id = btn.getAttribute('data-id');
+          var row = tb.querySelector('.rs-detalhe[data-id="'+id+'"]');
+          if(row) row.style.display = (row.style.display==='none'||!row.style.display)?'table-row':'none';
+        });
+      });
+      tb.querySelectorAll('.rs-status-select').forEach(function(sel){
+        sel.addEventListener('change', async function(){
+          var id = sel.getAttribute('data-id');
+          var novo = sel.value;
+          var c = sbClient(); if(!c) return;
+          sel.disabled = true;
+          var r = await c.from('pedidos').update({ status: novo }).eq('id', id);
+          sel.disabled = false;
+          if(r.error){ alert('Nao foi possivel atualizar o status: '+r.error.message); console.error(r.error); }
+          else {
+            var item = cache.filter(function(x){return x.id===id;})[0];
+            if(item) item.status = novo;
+            atualizarContagens();
+            renderRecentes();
+            if(filtro!=='todos' && novo!==filtro) renderFull();
+          }
+        });
+      });
+    }
+
+    function renderRecentes(){
+      var tb = document.getElementById('rs-pedidos-recentes');
+      if(!tb) return;
+      var rec = cache.slice(0,5);
+      if(!rec.length){ tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--text-muted)">Nenhum pedido ainda.</td></tr>'; return; }
+      tb.innerHTML = rec.map(function(p){
+        var st = statusInfo(p.status);
+        return '<tr>'+
+          '<td><span class="order-id">#'+esc(p.numero)+'</span><br/><span style="font-size:11px;color:var(--text-muted)">'+dataHora(p.criado_em)+'</span></td>'+
+          '<td><strong>'+esc(p.cliente_nome)+'</strong><br/><span style="font-size:11px;color:var(--text-muted)">'+esc(p.cliente_cep||'')+'</span></td>'+
+          '<td><strong>'+brl(p.total)+'</strong></td>'+
+          '<td><span class="status '+st.cls+'">'+st.label+'</span></td>'+
+          '<td></td>'+
+        '</tr>';
+      }).join('');
+    }
+
+    function atualizarContagens(){
+      function setc(id,n){ var e=document.getElementById(id); if(e) e.textContent=n; }
+      setc('rs-cnt-todos', cache.length);
+      setc('rs-cnt-aguardando', cache.filter(function(p){return p.status==='aguardando';}).length);
+      setc('rs-cnt-pago', cache.filter(function(p){return p.status==='pago';}).length);
+      setc('rs-cnt-enviado', cache.filter(function(p){return p.status==='enviado';}).length);
+      setc('rs-cnt-entregue', cache.filter(function(p){return p.status==='entregue';}).length);
+      var badge = document.getElementById('rs-badge-pedidos');
+      if(badge){ var a = cache.filter(function(p){return p.status==='aguardando';}).length; badge.textContent = a; badge.style.display = a>0?'':'none'; }
+    }
+
+    async function carregar(){
+      var c = sbClient(); if(!c) return;
+      var tb = document.getElementById('rs-tabela-pedidos');
+      if(tb) tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--text-muted)">Carregando pedidos...</td></tr>';
+      var resp = await c.from('pedidos').select('*').order('criado_em',{ascending:false});
+      if(resp.error){
+        if(tb) tb.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#DC2626">Erro ao carregar: '+esc(resp.error.message)+'</td></tr>';
+        console.error('Erro ao carregar pedidos:', resp.error);
+        return;
+      }
+      cache = resp.data || [];
+      atualizarContagens();
+      renderFull();
+      renderRecentes();
+    }
+
+    document.addEventListener('DOMContentLoaded', function(){
+      var bar = document.getElementById('rs-filtros-pedidos');
+      if(bar){
+        bar.querySelectorAll('.filter-chip').forEach(function(chip){
+          chip.addEventListener('click', function(){
+            filtro = chip.getAttribute('data-filtro') || 'todos';
+            renderFull();
+          });
+        });
+      }
+    });
+
+    window.carregarPedidos = carregar;
+  })();
   </script>
 
 </body>

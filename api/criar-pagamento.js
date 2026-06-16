@@ -45,6 +45,8 @@ export default async function handler(req, res) {
       order_nsu: order_nsu || `pedido-${Date.now()}`,
       // Pra onde o cliente volta depois de pagar.
       redirect_url: `${SITE_URL}/pagamento-concluido.html`,
+      // Pra onde a InfinitePay AVISA que o pagamento foi feito (confirmação automática).
+      webhook_url: `${SITE_URL}/api/webhook`,
     };
 
     // 6) Chama o Infinity Pay.

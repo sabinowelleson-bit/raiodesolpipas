@@ -223,6 +223,7 @@
 
   <!-- Supabase + lógica da página de produto -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="carrinho.js"></script>
   <script>
   (function() {
     // ---- CONFIG ----
@@ -391,14 +392,41 @@
       var aviso = document.getElementById('aviso');
       // Se tem variantes e nenhuma foi escolhida, avisa
       if (variantes.length > 0 && (!varianteEscolhida || varianteEscolhida.semVariante)) {
+        aviso.style.color = 'var(--accent-3)';
         aviso.textContent = 'Escolha uma variação antes de adicionar.';
         return;
       }
-      // Por enquanto (Etapa 3), só confirma a escolha. A Etapa 4 conecta no carrinho real.
+      if (!varianteEscolhida) return;
+
+      var estoque = Number(varianteEscolhida.estoque) || 0;
+      if (estoque <= 0) {
+        aviso.style.color = 'var(--accent-3)';
+        aviso.textContent = 'Produto esgotado.';
+        return;
+      }
+
       var qtd = parseInt(document.getElementById('qty-input').value) || 1;
+
+      // preço resolvido (promoção, se houver)
+      var temPromo = varianteEscolhida.preco_promo && varianteEscolhida.preco_promo < varianteEscolhida.preco;
+      var precoAtual = temPromo ? varianteEscolhida.preco_promo : varianteEscolhida.preco;
+
+      Carrinho.adicionar({
+        produto_id:  produto.id,
+        variante_id: varianteEscolhida.id || null,
+        nome:        produto.nome,
+        categoria:   produto.categoria || '',
+        cor:         varianteEscolhida.cor || '',
+        tamanho:     varianteEscolhida.tamanho || '',
+        preco:       Number(precoAtual) || 0,
+        qtd:         qtd,
+        foto:        produto.imagem_url || '',
+        estoque:     estoque
+      });
+
       aviso.style.color = 'var(--success)';
-      aviso.textContent = 'Selecionado: ' + qtd + 'x ' + rotuloVariante(varianteEscolhida) +
-        ' — (carrinho será conectado na próxima etapa)';
+      aviso.innerHTML = qtd + 'x adicionado ao carrinho — ' +
+        '<a href="carrinho_raio_de_sol.html" style="color:var(--accent);text-decoration:underline;font-weight:700">ver carrinho</a>';
     }
 
     // ---- INIT ----

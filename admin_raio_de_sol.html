@@ -903,7 +903,7 @@
     </header>
 
     <!-- FORMULÁRIO FUNCIONAL DE PRODUTO (cadastro real via localStorage) -->
-    <section class="view active" data-view="products" style="padding:32px;">
+    <section class="view" data-view="products" style="padding:32px;">
       <div class="form-wrapper" style="max-width:760px">
         <div class="form-body" style="display:block">
           <form id="rs-form-produto">
@@ -1384,7 +1384,7 @@
         <div class="view-head">
           <div>
             <h2>Pedidos</h2>
-            <p>7 pedidos aguardando ação · gerencie envios, pagamentos e status.</p>
+            <p><span id="rs-sub-aguardando">0</span> pedido(s) aguardando pagamento · gerencie envios, pagamentos e status.</p>
           </div>
         </div>
 
@@ -1820,6 +1820,7 @@
       setc('rs-cnt-pago', cache.filter(function(p){return p.status==='pago';}).length);
       setc('rs-cnt-enviado', cache.filter(function(p){return p.status==='enviado';}).length);
       setc('rs-cnt-entregue', cache.filter(function(p){return p.status==='entregue';}).length);
+      setc('rs-sub-aguardando', cache.filter(function(p){return p.status==='aguardando';}).length);
       var badge = document.getElementById('rs-badge-pedidos');
       if(badge){ var a = cache.filter(function(p){return p.status==='aguardando';}).length; badge.textContent = a; badge.style.display = a>0?'':'none'; }
     }

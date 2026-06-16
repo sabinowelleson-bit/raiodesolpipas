@@ -1093,7 +1093,7 @@ window.Carrinho = (() => {
           }]);
           if (resPedido.error){
             console.error('Erro ao gravar pedido:', resPedido.error);
-            mostrarErro('Não conseguimos registrar seu pedido. Tente novamente em instantes.');
+            mostrarErro('DEBUG insert: ' + (resPedido.error.message || 'sem mensagem') + ' | code: ' + (resPedido.error.code || 'sem codigo') + ' | details: ' + (resPedido.error.details || '-'));
             restaurar();
             return;
           }

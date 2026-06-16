@@ -31,12 +31,34 @@ function linkWhatsApp(produto) {
 
 // ---------- Funções de dados (Supabase) ----------
 async function getProdutos({ somenteAtivos = true, somenteDestaques = false } = {}) {
-  let query = sb.from('produtos').select('*').order('created_at', { ascending: false });
+  // Traz o produto + suas variantes (relacionamento pela FK produto_id)
+  let query = sb
+    .from('produtos')
+    .select('*, variantes(*)')
+    .order('created_at', { ascending: false });
   if (somenteAtivos)    query = query.eq('ativo', true);
   if (somenteDestaques) query = query.eq('destaque', true).limit(4);
   const { data, error } = await query;
   if (error) { console.error('Erro ao buscar produtos:', error); return []; }
   return data || [];
+}
+
+// Helpers de variação: a partir das variantes de um produto, descobre
+// o menor preço (pra exibir "a partir de") e o estoque total.
+function precoExibicao(p) {
+  const vars = (p.variantes || []).filter(function (v) { return v.ativo !== false; });
+  if (vars.length > 0) {
+    const precos = vars.map(function (v) { return v.preco_promo || v.preco; }).filter(function (n) { return n > 0; });
+    if (precos.length > 0) return Math.min.apply(null, precos);
+  }
+  return p.preco_promo || p.preco || 0;
+}
+function estoqueTotal(p) {
+  const vars = (p.variantes || []).filter(function (v) { return v.ativo !== false; });
+  if (vars.length > 0) {
+    return vars.reduce(function (soma, v) { return soma + (Number(v.estoque) || 0); }, 0);
+  }
+  return p.estoque != null ? p.estoque : null;
 }
 
 async function removerProduto(id) {
@@ -62,11 +84,37 @@ async function uploadFoto(arquivo) {
   return data.publicUrl;
 }
 
-async function adicionarProduto(produto, arquivoFoto) {
+async function adicionarProduto(produto, arquivoFoto, variantes) {
   let imagem_url = null;
   if (arquivoFoto) imagem_url = await uploadFoto(arquivoFoto);
-  const { error } = await sb.from('produtos').insert([Object.assign({}, produto, { imagem_url: imagem_url })]);
-  if (error) { console.error('Erro ao salvar:', error); throw error; }
+
+  // 1) Cria o produto e RECUPERA o registro criado (precisamos do id pra ligar as variantes)
+  const { data: criado, error } = await sb
+    .from('produtos')
+    .insert([Object.assign({}, produto, { imagem_url: imagem_url })])
+    .select()
+    .single();
+  if (error) { console.error('Erro ao salvar produto:', error); throw error; }
+
+  // 2) Se vieram variantes, salva cada uma ligada ao produto recém-criado
+  if (variantes && variantes.length > 0) {
+    const linhas = variantes.map(function (v) {
+      return {
+        produto_id: criado.id,
+        cor:        v.cor || null,
+        tamanho:    v.tamanho || null,
+        preco:      v.preco || 0,
+        estoque:    v.estoque || 0,
+        ativo:      true
+      };
+    });
+    const { error: errVar } = await sb.from('variantes').insert(linhas);
+    if (errVar) {
+      console.error('Erro ao salvar variações:', errVar);
+      // O produto foi criado, mas as variantes falharam — avisa de forma clara
+      throw new Error('O produto foi salvo, mas houve erro ao salvar as variações. Verifique e tente editar.');
+    }
+  }
 }
 
 // ===================================================================
@@ -105,11 +153,15 @@ function initAdmin() {
       return;
     }
     tabela.innerHTML = lista.map(function(p) {
+      var nVars = (p.variantes || []).length;
+      var precoTxt = (nVars > 0 ? 'A partir de ' : '') + formatarPreco(precoExibicao(p));
+      var est = estoqueTotal(p);
+      var estTxt = (est != null ? est : '—') + (nVars > 0 ? ' <span style="font-size:10px;color:#64748B">(' + nVars + ' var.)</span>' : '');
       return '<tr>' +
         '<td><strong>' + p.nome + '</strong><br/>' +
         '<span style="font-size:11px;color:#64748B">' + (p.categoria || '—') + '</span></td>' +
-        '<td>' + formatarPreco(p.preco) + '</td>' +
-        '<td>' + (p.estoque != null ? p.estoque : '—') + '</td>' +
+        '<td>' + precoTxt + '</td>' +
+        '<td>' + estTxt + '</td>' +
         '<td style="text-align:center">' + (p.destaque ? '⭐ Sim' : '—') + '</td>' +
         '<td style="text-align:right">' +
           '<button class="icon-action danger" onclick="excluirProdutoAdmin(' + p.id + ')" title="Excluir">' +
@@ -164,17 +216,23 @@ function initAdmin() {
     };
     if (!produto.nome) { alert('Informe o nome do produto.'); return; }
 
+    // Lê as variações preenchidas no formulário (se a UI estiver disponível)
+    const variantes = (window.rsVariantes && window.rsVariantes.ler) ? window.rsVariantes.ler() : [];
+
     const textoBtn = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
     try {
-      await adicionarProduto(produto, arquivoSelecionado);
+      await adicionarProduto(produto, arquivoSelecionado, variantes);
       form.reset();
       arquivoSelecionado = null;
       if (preview) preview.style.display = 'none';
+      if (window.rsVariantes && window.rsVariantes.limpar) window.rsVariantes.limpar();
       await renderTabelaAdmin();
       alert('Produto cadastrado com sucesso!');
     } catch (err) {
-      alert('Não foi possível salvar. Verifique se você está logado e tente novamente.');
+      // Mostra a mensagem real do erro quando existir (ajuda a diagnosticar)
+      const msg = (err && err.message) ? err.message : 'Não foi possível salvar. Verifique se você está logado e tente novamente.';
+      alert(msg);
     } finally {
       if (btn) { btn.disabled = false; btn.textContent = textoBtn; }
     }
@@ -189,8 +247,9 @@ function initAdmin() {
 
 // Card para seção de destaques (product-card)
 function gerarCardHTML(p) {
-  var temPromo = p.preco_promo && p.preco_promo < p.preco;
-  var precoAtual = temPromo ? p.preco_promo : p.preco;
+  var temVariantes = (p.variantes || []).filter(function(v){ return v.ativo !== false; }).length > 0;
+  var precoAtual = precoExibicao(p);
+  var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
   var parcela = precoAtual / 12;
   var foto = p.imagem_url || 'https://via.placeholder.com/400x400?text=Raio+de+Sol+Pipas';
 
@@ -222,8 +281,9 @@ function gerarCardHTML(p) {
 // Card para catálogo (cat-card-mini)
 function gerarCatCardHTML(p) {
   var foto = p.imagem_url || 'https://via.placeholder.com/400x400?text=Raio+de+Sol+Pipas';
-  var temPromo = p.preco_promo && p.preco_promo < p.preco;
-  var precoAtual = temPromo ? p.preco_promo : p.preco;
+  var temVariantes = (p.variantes || []).filter(function(v){ return v.ativo !== false; }).length > 0;
+  var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
+  var precoAtual = precoExibicao(p);
 
   return '<article class="cat-card-mini">' +
     '<div class="cat-card-mini-media">' +

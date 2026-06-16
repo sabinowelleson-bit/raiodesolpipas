@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="b">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#A8D0F5" />
+  <title id="page-title">Produto — Raio de Sol Pipas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.ico" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+    img, svg { display: block; max-width: 100%; }
+    button { cursor: pointer; border: 0; background: transparent; font-family: inherit; color: inherit; }
+    a { color: inherit; text-decoration: none; }
+    ul { list-style: none; }
+
+    :root {
+      --bg: #FFFFFF;
+      --bg-elev: #F0F7FF;
+      --bg-card: #FFFFFF;
+      --bg-overlay: rgba(255, 255, 255, 0.88);
+      --border: #DCEAFC;
+      --border-strong: #B8D4F0;
+      --text: #0B1E3F;
+      --text-muted: #4A6584;
+      --text-dim: #8AA0BC;
+      --accent: #3B82F6;
+      --accent-2: #FBBF24;
+      --accent-3: #DC2626;
+      --accent-soft: rgba(59, 130, 246, 0.08);
+      --success: #10B981;
+      --font-display: 'Anton', sans-serif;
+      --font-body: 'Manrope', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --radius: 14px;
+      --radius-sm: 8px;
+      --shadow-card: 0 10px 40px -10px rgba(59, 130, 246, 0.18);
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    @media (max-width: 640px) { .container { padding: 0 16px; } }
+
+    /* HEADER */
+    .site-header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg-overlay);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      height: 72px;
+    }
+    .site-header .container {
+      height: 100%;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    }
+    .brand { display: flex; align-items: center; }
+    .brand-logo { height: 56px; width: auto; }
+    .nav { display: flex; align-items: center; gap: 28px; }
+    .nav a {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em;
+    }
+    .nav a:hover { color: var(--accent); }
+    @media (max-width: 860px) { .nav { display: none; } }
+
+    /* BREADCRUMB */
+    .breadcrumb {
+      padding: 18px 0; font-size: 13px; color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+    .breadcrumb a:hover { color: var(--accent); }
+
+    /* LAYOUT PRODUTO */
+    .produto-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      padding: 16px 0 64px;
+    }
+    @media (max-width: 800px) { .produto-wrap { grid-template-columns: 1fr; gap: 28px; } }
+
+    .produto-media {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .produto-media img { width: 100%; height: 100%; object-fit: contain; }
+
+    .produto-cat {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      color: var(--accent); text-transform: uppercase; letter-spacing: .06em;
+    }
+    .produto-nome {
+      font-family: var(--font-display); font-size: clamp(28px, 5vw, 44px);
+      line-height: 1.05; margin: 10px 0 16px; color: var(--text);
+    }
+    .produto-desc { color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
+
+    .produto-preco-bloco { margin-bottom: 28px; }
+    .produto-preco {
+      font-family: var(--font-display); font-size: 40px; color: var(--accent);
+      line-height: 1;
+    }
+    .produto-parcela { font-size: 14px; color: var(--text-muted); margin-top: 6px; }
+    .produto-estoque {
+      display: inline-block; margin-top: 10px; font-size: 13px; font-weight: 600;
+      padding: 4px 12px; border-radius: 100px;
+    }
+    .estoque-ok  { background: rgba(16,185,129,.12); color: var(--success); }
+    .estoque-out { background: rgba(220,38,38,.12); color: var(--accent-3); }
+
+    /* SELETOR DE VARIAÇÃO */
+    .var-bloco { margin-bottom: 24px; }
+    .var-label {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .04em; color: var(--text-muted); margin-bottom: 10px;
+    }
+    .var-opcoes { display: flex; flex-wrap: wrap; gap: 10px; }
+    .var-opcao {
+      border: 2px solid var(--border-strong); background: #fff;
+      border-radius: 10px; padding: 10px 16px; font-weight: 600; font-size: 14px;
+      color: var(--text); transition: all .15s ease;
+    }
+    .var-opcao:hover { border-color: var(--accent); }
+    .var-opcao.ativa { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .var-opcao.esgotada {
+      opacity: .4; text-decoration: line-through; cursor: not-allowed;
+    }
+
+    /* QUANTIDADE */
+    .qty-wrap { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+    .qty-control {
+      display: inline-flex; align-items: center;
+      border: 2px solid var(--border-strong); border-radius: 10px; overflow: hidden;
+    }
+    .qty-btn { width: 40px; height: 44px; font-size: 20px; color: var(--accent); }
+    .qty-btn:hover { background: var(--accent-soft); }
+    .qty-input {
+      width: 50px; height: 44px; text-align: center; border: 0;
+      font-size: 16px; font-weight: 700; font-family: var(--font-body);
+      -moz-appearance: textfield;
+    }
+    .qty-input::-webkit-outer-spin-button,
+    .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    /* BOTÃO ADICIONAR */
+    .add-cart-btn {
+      width: 100%; padding: 16px; border-radius: 12px;
+      background: var(--accent); color: #fff; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: all .2s ease;
+    }
+    .add-cart-btn:hover { background: #2563EB; transform: translateY(-2px); }
+    .add-cart-btn:disabled { background: var(--text-dim); cursor: not-allowed; transform: none; }
+
+    .aviso-escolha {
+      font-size: 13px; color: var(--accent-3); margin-top: 10px; min-height: 18px;
+      font-weight: 600;
+    }
+
+    /* ESTADOS */
+    .state-message {
+      grid-column: 1/-1; text-align: center; padding: 80px 24px; color: var(--text-muted);
+    }
+    .state-message strong { display: block; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+
+    /* FOOTER simples */
+    .site-footer {
+      border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px;
+      text-align: center; color: var(--text-dim); font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
+        <img src="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png" alt="Raio de Sol Pipas" class="brand-logo"/>
+      </a>
+      <nav class="nav">
+        <a href="catalogo.html?cat=Pipas">Pipas</a>
+        <a href="catalogo.html?cat=Linhas">Linhas</a>
+        <a href="catalogo.html?cat=Carretilhas">Carretilhas</a>
+        <a href="catalogo.html?cat=Rabiolas">Rabiolas</a>
+        <a href="catalogo.html?cat=Raias">Raias</a>
+        <a href="catalogo.html?cat=Kits">Kits</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Caminho">
+      <a href="index.html">Início</a> ·
+      <a href="catalogo.html">Catálogo</a> ·
+      <span id="breadcrumb-nome">Produto</span>
+    </nav>
+
+    <main id="produto-conteudo">
+      <!-- Preenchido via JavaScript -->
+      <div class="state-message"><strong>Carregando…</strong>Buscando o produto.</div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">Raio de Sol Pipas · Pipas, linhas e diversão no alto!</div>
+  </footer>
+
+  <!-- Supabase + lógica da página de produto -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+  (function() {
+    // ---- CONFIG ----
+    var SUPABASE_URL = 'https://kscqoczfdtoanjdoidtl.supabase.co';
+    var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3FvY3pmZHRvYW5qZG9pZHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTQ3NjIsImV4cCI6MjA5NjY5MDc2Mn0.xI0Y2tNGls4Rj_jpbvixadWCb6asFU0jAyDL4G_TSDA';
+    var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // ---- ESTADO ----
+    var produto = null;
+    var variantes = [];
+    var varianteEscolhida = null; // a variante atualmente selecionada
+
+    // ---- HELPERS ----
+    function formatarPreco(v) {
+      return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+    // Monta o rótulo de uma variante: "Azul · 45cm", "Azul", ou "45cm"
+    function rotuloVariante(v) {
+      var partes = [];
+      if (v.cor) partes.push(v.cor);
+      if (v.tamanho) partes.push(v.tamanho);
+      return partes.join(' · ') || 'Padrão';
+    }
+
+    // Lê o ?id= da URL
+    function getIdDaUrl() {
+      var params = new URLSearchParams(window.location.search);
+      return params.get('id');
+    }
+
+    // ---- RENDER ----
+    function render() {
+      var alvo = document.getElementById('produto-conteudo');
+      var temVariantes = variantes.length > 0;
+
+      // Foto
+      var foto = produto.imagem_url || 'https://via.placeholder.com/600x600/F0F7FF/8AA0BC?text=' + encodeURIComponent(produto.nome);
+
+      // Monta os botões de variação
+      var variacoesHTML = '';
+      if (temVariantes) {
+        variacoesHTML =
+          '<div class="var-bloco">' +
+            '<div class="var-label">Escolha a variação</div>' +
+            '<div class="var-opcoes" id="var-opcoes">' +
+              variantes.map(function(v, i) {
+                var esgotada = (Number(v.estoque) || 0) <= 0;
+                return '<button class="var-opcao' + (esgotada ? ' esgotada' : '') + '" ' +
+                  'data-idx="' + i + '"' + (esgotada ? ' disabled' : '') + '>' +
+                  rotuloVariante(v) +
+                '</button>';
+              }).join('') +
+            '</div>' +
+          '</div>';
+      }
+
+      alvo.innerHTML =
+        '<div class="produto-wrap">' +
+          '<div class="produto-media"><img src="' + foto + '" alt="' + produto.nome + '"/></div>' +
+          '<div class="produto-detalhe">' +
+            '<span class="produto-cat">' + (produto.categoria || 'Produto') + '</span>' +
+            '<h1 class="produto-nome">' + produto.nome + '</h1>' +
+            (produto.descricao ? '<p class="produto-desc">' + produto.descricao + '</p>' : '') +
+            variacoesHTML +
+            '<div class="produto-preco-bloco">' +
+              '<div class="produto-preco" id="preco-display">—</div>' +
+              '<div class="produto-parcela" id="parcela-display"></div>' +
+              '<div id="estoque-display"></div>' +
+            '</div>' +
+            '<div class="qty-wrap">' +
+              '<div class="var-label" style="margin:0">Qtd</div>' +
+              '<div class="qty-control">' +
+                '<button class="qty-btn" type="button" id="qty-menos">−</button>' +
+                '<input class="qty-input" type="number" id="qty-input" value="1" min="1"/>' +
+                '<button class="qty-btn" type="button" id="qty-mais">+</button>' +
+              '</div>' +
+            '</div>' +
+            '<button class="add-cart-btn" id="btn-add" type="button">Adicionar ao carrinho</button>' +
+            '<div class="aviso-escolha" id="aviso"></div>' +
+          '</div>' +
+        '</div>';
+
+      // Liga os eventos
+      if (temVariantes) {
+        document.querySelectorAll('.var-opcao').forEach(function(btn) {
+          if (btn.disabled) return;
+          btn.addEventListener('click', function() {
+            document.querySelectorAll('.var-opcao').forEach(function(b){ b.classList.remove('ativa'); });
+            btn.classList.add('ativa');
+            varianteEscolhida = variantes[parseInt(btn.dataset.idx)];
+            atualizarPrecoEstoque();
+          });
+        });
+      } else {
+        // Produto sem variantes: usa preço/estoque do próprio produto
+        varianteEscolhida = {
+          preco: produto.preco,
+          preco_promo: produto.preco_promo,
+          estoque: produto.estoque,
+          cor: null, tamanho: null,
+          semVariante: true
+        };
+        atualizarPrecoEstoque();
+      }
+
+      // Quantidade
+      document.getElementById('qty-menos').addEventListener('click', function(){ ajustarQty(-1); });
+      document.getElementById('qty-mais').addEventListener('click', function(){ ajustarQty(1); });
+
+      // Botão adicionar (na Etapa 4 vai realmente salvar no carrinho)
+      document.getElementById('btn-add').addEventListener('click', adicionarAoCarrinho);
+    }
+
+    function atualizarPrecoEstoque() {
+      var precoEl = document.getElementById('preco-display');
+      var parcEl  = document.getElementById('parcela-display');
+      var estEl   = document.getElementById('estoque-display');
+      var aviso   = document.getElementById('aviso');
+      if (aviso) aviso.textContent = '';
+
+      if (!varianteEscolhida) {
+        precoEl.textContent = 'Selecione uma variação';
+        precoEl.style.fontSize = '20px';
+        parcEl.textContent = '';
+        estEl.innerHTML = '';
+        return;
+      }
+
+      var v = varianteEscolhida;
+      var temPromo = v.preco_promo && v.preco_promo < v.preco;
+      var precoAtual = temPromo ? v.preco_promo : v.preco;
+      var estoque = Number(v.estoque) || 0;
+
+      precoEl.style.fontSize = '40px';
+      precoEl.textContent = formatarPreco(precoAtual);
+
+      var parcela = precoAtual / 12;
+      parcEl.textContent = 'ou 12x de ' + formatarPreco(parcela) + ' sem juros';
+
+      if (estoque > 0) {
+        estEl.innerHTML = '<span class="produto-estoque estoque-ok">' + estoque + ' em estoque</span>';
+      } else {
+        estEl.innerHTML = '<span class="produto-estoque estoque-out">Esgotado</span>';
+      }
+
+      // Ajusta o máximo da quantidade ao estoque
+      var qtyInput = document.getElementById('qty-input');
+      if (qtyInput) {
+        qtyInput.max = estoque;
+        if (parseInt(qtyInput.value) > estoque) qtyInput.value = Math.max(1, estoque);
+      }
+
+      // Botão habilitado só se há estoque
+      var btn = document.getElementById('btn-add');
+      btn.disabled = estoque <= 0;
+    }
+
+    function ajustarQty(delta) {
+      var input = document.getElementById('qty-input');
+      var max = parseInt(input.max) || 9999;
+      var novo = Math.max(1, Math.min(max, (parseInt(input.value) || 1) + delta));
+      input.value = novo;
+    }
+
+    function adicionarAoCarrinho() {
+      var aviso = document.getElementById('aviso');
+      // Se tem variantes e nenhuma foi escolhida, avisa
+      if (variantes.length > 0 && (!varianteEscolhida || varianteEscolhida.semVariante)) {
+        aviso.textContent = 'Escolha uma variação antes de adicionar.';
+        return;
+      }
+      // Por enquanto (Etapa 3), só confirma a escolha. A Etapa 4 conecta no carrinho real.
+      var qtd = parseInt(document.getElementById('qty-input').value) || 1;
+      aviso.style.color = 'var(--success)';
+      aviso.textContent = 'Selecionado: ' + qtd + 'x ' + rotuloVariante(varianteEscolhida) +
+        ' — (carrinho será conectado na próxima etapa)';
+    }
+
+    // ---- INIT ----
+    async function init() {
+      var id = getIdDaUrl();
+      var alvo = document.getElementById('produto-conteudo');
+
+      if (!id) {
+        alvo.innerHTML = '<div class="state-message"><strong>Produto não encontrado</strong>Link inválido. <a href="catalogo.html" style="color:var(--accent)">Voltar ao catálogo</a></div>';
+        return;
+      }
+
+      // Busca o produto + variantes
+      var resp = await sb.from('produtos').select('*, variantes(*)').eq('id', id).single();
+
+      if (resp.error || !resp.data) {
+        alvo.innerHTML = '<div class="state-message"><strong>Produto não encontrado</strong>Esse produto pode ter saído do catálogo. <a href="catalogo.html" style="color:var(--accent)">Voltar ao catálogo</a></div>';
+        return;
+      }
+
+      produto = resp.data;
+      // Só variantes ativas, com estoque listado primeiro
+      variantes = (produto.variantes || []).filter(function(v){ return v.ativo !== false; });
+
+      // Atualiza título e breadcrumb
+      document.getElementById('page-title').textContent = produto.nome + ' — Raio de Sol Pipas';
+      document.getElementById('breadcrumb-nome').textContent = produto.nome;
+
+      render();
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  })();
+  </script>
+
+</body>
+</html>

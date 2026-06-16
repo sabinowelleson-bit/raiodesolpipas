@@ -522,6 +522,48 @@
         <p style="color:var(--text-muted);margin-bottom:22px">Adicione pipas, linhas e acessórios para continuar.</p>
         <a href="catalogo.html" style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;padding:13px 30px;border-radius:12px;font-weight:700;text-decoration:none">Ver catálogo</a>
       </div>
+      <!-- DADOS DE ENTREGA -->
+      <div id="delivery-form" class="delivery-form" style="display:none">
+        <style>
+          .delivery-form{margin-top:22px;background:var(--bg-card,#fff);border:1px solid var(--border,#E2E8F0);border-radius:16px;padding:22px}
+          .delivery-form h3{font-family:var(--font-display);font-size:18px;color:var(--text);margin:0 0 4px}
+          .delivery-form .df-sub{font-size:12px;color:var(--text-muted);margin:0 0 16px}
+          .delivery-form .df-field{margin-bottom:12px}
+          .delivery-form label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:5px}
+          .delivery-form input,.delivery-form textarea{width:100%;padding:11px 13px;border:1px solid var(--border-strong,#CBD5E1);border-radius:10px;font-family:inherit;font-size:14px;color:var(--text);background:var(--bg,#fff);box-sizing:border-box}
+          .delivery-form input:focus,.delivery-form textarea:focus{outline:none;border-color:var(--accent)}
+          .delivery-form textarea{resize:vertical;min-height:64px}
+          .delivery-form .df-row{display:flex;gap:12px}
+          .delivery-form .df-row .df-field{flex:1}
+          .delivery-form .df-error{color:#DC2626;font-size:12px;margin-top:8px;display:none}
+          @media (max-width:560px){.delivery-form .df-row{flex-direction:column;gap:0}}
+        </style>
+        <h3>Dados de entrega</h3>
+        <p class="df-sub">Pra onde mandamos seu pedido.</p>
+        <div class="df-field">
+          <label for="df-nome">Nome completo</label>
+          <input type="text" id="df-nome" autocomplete="name"/>
+        </div>
+        <div class="df-row">
+          <div class="df-field">
+            <label for="df-tel">WhatsApp</label>
+            <input type="tel" id="df-tel" placeholder="(94) 90000-0000" autocomplete="tel"/>
+          </div>
+          <div class="df-field">
+            <label for="df-email">E-mail (opcional)</label>
+            <input type="email" id="df-email" placeholder="voce@email.com" autocomplete="email"/>
+          </div>
+        </div>
+        <div class="df-field">
+          <label for="df-cep">CEP</label>
+          <input type="text" id="df-cep" placeholder="00000-000" maxlength="9" autocomplete="postal-code"/>
+        </div>
+        <div class="df-field">
+          <label for="df-end">Endereço completo</label>
+          <textarea id="df-end" placeholder="Rua, número, bairro, cidade/UF, complemento"></textarea>
+        </div>
+        <div class="df-error" id="df-error"></div>
+      </div>
     </section>
 
     <!-- RIGHT: ORDER SUMMARY -->
@@ -630,6 +672,7 @@
     </div>
   </footer>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
 /* =========================================================================
    carrinho.js — Carrinho de compras (Raio de Sol Pipas)
@@ -808,6 +851,11 @@ window.Carrinho = (() => {
   </script>
   <script>
   (function(){
+    // ---- SUPABASE (para gravar o pedido) ----
+    var sb = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient('https://kscqoczfdtoanjdoidtl.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzY3FvY3pmZHRvYW5qZG9pZHRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMTQ3NjIsImV4cCI6MjA5NjY5MDc2Mn0.xI0Y2tNGls4Rj_jpbvixadWCb6asFU0jAyDL4G_TSDA')
+      : null;
+
     // ---- HELPERS ----
     function brl(v){ return Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL' }); }
     function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -865,12 +913,15 @@ window.Carrinho = (() => {
       var lista = document.getElementById('cart-list');
       var vazio = document.getElementById('empty-state');
 
+      var form = document.getElementById('delivery-form');
       if (itens.length === 0){
         lista.innerHTML = '';
         if (vazio) vazio.style.display = 'block';
+        if (form) form.style.display = 'none';
       } else {
         if (vazio) vazio.style.display = 'none';
         lista.innerHTML = itens.map(renderItem).join('');
+        if (form) form.style.display = '';
       }
       ligarEventosItens();
       atualizarTotais();
@@ -941,13 +992,139 @@ window.Carrinho = (() => {
       });
     }
 
-    // ---- FINALIZAR (a Etapa de checkout conecta no /api/criar-pagamento.js) ----
+    // ---- CHECKOUT: grava pedido (Supabase) + gera link de pagamento (Infinity Pay) ----
+    function lerFormEntrega(){
+      function val(id){ var el = document.getElementById(id); return el ? el.value.trim() : ''; }
+      return {
+        nome: val('df-nome'),
+        tel: val('df-tel'),
+        email: val('df-email'),
+        cep: val('df-cep'),
+        end: val('df-end')
+      };
+    }
+    function mostrarErro(msg){
+      var box = document.getElementById('df-error');
+      if (box){ box.textContent = msg; box.style.display = 'block'; }
+    }
+    function limparErro(){
+      var box = document.getElementById('df-error');
+      if (box){ box.textContent = ''; box.style.display = 'none'; }
+    }
+    function validarEntrega(d){
+      if (!d.nome) return 'Preencha seu nome completo.';
+      if (!d.tel || d.tel.replace(/\D/g, '').length < 10) return 'Preencha um WhatsApp válido com DDD.';
+      if (d.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return 'O e-mail informado não parece válido.';
+      if (!d.cep || d.cep.replace(/\D/g, '').length !== 8) return 'Preencha um CEP válido (8 dígitos).';
+      if (!d.end || d.end.length < 8) return 'Preencha o endereço completo de entrega.';
+      return null;
+    }
+    function itensParaPagamento(itens, frete){
+      var lista = itens.map(function(it){
+        var nome = it.nome;
+        var extra = [];
+        if (it.cor) extra.push(it.cor);
+        if (it.tamanho) extra.push(it.tamanho);
+        if (extra.length) nome += ' (' + extra.join(' \u00b7 ') + ')';
+        return { descricao: nome, quantidade: Number(it.qtd) || 1, preco: Number(it.preco) || 0 };
+      });
+      if (frete && frete.valor > 0){
+        lista.push({ descricao: 'Frete (' + (frete.label || 'Entrega') + ')', quantidade: 1, preco: frete.valor });
+      }
+      return lista;
+    }
+
     function ligarFinalizar(){
       var btn = document.querySelector('.checkout-btn');
       if (!btn) return;
-      btn.addEventListener('click', function(){
+      var textoOriginal = btn.innerHTML;
+
+      btn.addEventListener('click', async function(){
         if (Carrinho.vazio()) return;
-        alert('O checkout será conectado na próxima etapa.');
+        limparErro();
+
+        var dados = lerFormEntrega();
+        var erro = validarEntrega(dados);
+        if (erro){
+          mostrarErro(erro);
+          var formEl = document.getElementById('delivery-form');
+          if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
+
+        var itens = Carrinho.ler();
+        var frete = freteSelecionado();
+        var subtotal = Carrinho.subtotal();
+        var freteVal = frete.valor || 0;
+        var total = subtotal + freteVal;
+        var numero = 'RS-' + Date.now().toString(36).toUpperCase();
+
+        function setBtn(txt, busy){
+          btn.innerHTML = txt;
+          btn.disabled = !!busy;
+          btn.style.opacity = busy ? '0.7' : '';
+          btn.style.cursor = busy ? 'wait' : '';
+        }
+        function restaurar(){ btn.innerHTML = textoOriginal; btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
+
+        if (!sb){
+          mostrarErro('Não foi possível conectar ao servidor. Recarregue a página e tente de novo.');
+          return;
+        }
+
+        setBtn('Gerando pagamento...', true);
+
+        // 1) Grava o pedido (status "aguardando"). Sem .select(): anon só tem INSERT na tabela.
+        try {
+          var resPedido = await sb.from('pedidos').insert([{
+            numero: numero,
+            cliente_nome: dados.nome,
+            cliente_email: dados.email || null,
+            cliente_tel: dados.tel,
+            cliente_cep: dados.cep,
+            cliente_end: dados.end,
+            itens: itens,
+            subtotal: subtotal,
+            frete: freteVal,
+            desconto: 0,
+            total: total,
+            status: 'aguardando',
+            frete_tipo: frete.label || null
+          }]);
+          if (resPedido.error){
+            console.error('Erro ao gravar pedido:', resPedido.error);
+            mostrarErro('Não conseguimos registrar seu pedido. Tente novamente em instantes.');
+            restaurar();
+            return;
+          }
+        } catch (e){
+          console.error(e);
+          mostrarErro('Erro ao registrar o pedido. Verifique sua conexão e tente novamente.');
+          restaurar();
+          return;
+        }
+
+        // 2) Gera o link de pagamento via função-ponte (Infinity Pay).
+        try {
+          var resp = await fetch('/api/criar-pagamento', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: numero })
+          });
+          var pag = await resp.json();
+          if (!resp.ok || !pag.url){
+            console.error('Erro criar-pagamento:', pag);
+            mostrarErro('Não foi possível gerar o pagamento. Tente novamente em instantes.');
+            restaurar();
+            return;
+          }
+          // 3) Redireciona pro checkout da Infinity Pay.
+          window.location.href = pag.url;
+        } catch (e){
+          console.error(e);
+          mostrarErro('Falha ao iniciar o pagamento. Verifique sua conexão e tente novamente.');
+          restaurar();
+        }
       });
     }
 

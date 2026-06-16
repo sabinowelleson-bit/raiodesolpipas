@@ -411,8 +411,8 @@
         return;
       }
 
-      // Busca o produto + variantes
-      var resp = await sb.from('produtos').select('*, variantes(*)').eq('id', id).single();
+      // 1) Busca o produto
+      var resp = await sb.from('produtos').select('*').eq('id', id).single();
 
       if (resp.error || !resp.data) {
         alvo.innerHTML = '<div class="state-message"><strong>Produto não encontrado</strong>Esse produto pode ter saído do catálogo. <a href="catalogo.html" style="color:var(--accent)">Voltar ao catálogo</a></div>';
@@ -420,8 +420,13 @@
       }
 
       produto = resp.data;
-      // Só variantes ativas, com estoque listado primeiro
-      variantes = (produto.variantes || []).filter(function(v){ return v.ativo !== false; });
+
+      // 2) Busca as variantes desse produto numa query separada (mais confiável que o join)
+      var respVar = await sb.from('variantes').select('*').eq('produto_id', id);
+      var listaVar = (respVar.error || !respVar.data) ? [] : respVar.data;
+
+      // Só variantes ativas
+      variantes = listaVar.filter(function(v){ return v.ativo !== false; });
 
       // Atualiza título e breadcrumb
       document.getElementById('page-title').textContent = produto.nome + ' — Raio de Sol Pipas';

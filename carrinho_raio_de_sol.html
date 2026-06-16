@@ -1057,7 +1057,7 @@ window.Carrinho = (() => {
         var subtotal = Carrinho.subtotal();
         var freteVal = frete.valor || 0;
         var total = subtotal + freteVal;
-        var numero = 'RS-' + Date.now().toString(36).toUpperCase();
+        var numero = Date.now(); // bigint (ms desde epoch): compatível com a coluna e único o bastante
 
         function setBtn(txt, busy){
           btn.innerHTML = txt;
@@ -1109,7 +1109,7 @@ window.Carrinho = (() => {
           var resp = await fetch('/api/criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: numero })
+            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: String(numero) })
           });
           var pag = await resp.json();
           if (!resp.ok || !pag.url){

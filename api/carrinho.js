@@ -8,6 +8,7 @@
        produto_id,    // bigint do produto (number ou string)
        variante_id,   // uuid da variante (string) ou null se o produto não tem variantes
        nome,          // nome do produto (pra exibir no carrinho)
+       categoria,     // texto (ex.: "Pipa") — vazio se não aplica
        cor,           // texto (ex.: "Azul") — vazio se não aplica
        tamanho,       // texto (ex.: "45cm") — vazio se não aplica
        preco,         // number — preço unitário JÁ resolvido (promo ou normal)
@@ -80,6 +81,7 @@ const Carrinho = (() => {
         produto_id:  novo.produto_id,
         variante_id: novo.variante_id || null,
         nome:        novo.nome || '',
+        categoria:   novo.categoria || '',
         cor:         novo.cor || '',
         tamanho:     novo.tamanho || '',
         preco:       Number(novo.preco) || 0,

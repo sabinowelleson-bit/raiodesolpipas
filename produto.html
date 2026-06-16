@@ -422,8 +422,12 @@
       produto = resp.data;
 
       // 2) Busca as variantes desse produto numa query separada (mais confiável que o join)
-      var respVar = await sb.from('variantes').select('*').eq('produto_id', id);
+      // Converte o id pra número, pois produto_id na tabela variantes é bigint
+      var idNum = parseInt(id, 10);
+      var respVar = await sb.from('variantes').select('*').eq('produto_id', idNum);
       var listaVar = (respVar.error || !respVar.data) ? [] : respVar.data;
+      if (respVar.error) console.error('Erro ao buscar variantes:', respVar.error);
+      console.log('Variantes encontradas para produto', idNum, ':', listaVar);
 
       // Só variantes ativas
       variantes = listaVar.filter(function(v){ return v.ativo !== false; });

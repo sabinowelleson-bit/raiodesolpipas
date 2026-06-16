@@ -1057,7 +1057,7 @@ window.Carrinho = (() => {
         var subtotal = Carrinho.subtotal();
         var freteVal = frete.valor || 0;
         var total = subtotal + freteVal;
-        var numero = Date.now(); // bigint (ms desde epoch): compatível com a coluna e único o bastante
+        var ref = 'RS-' + Date.now().toString(36).toUpperCase(); // referência do pedido (texto) p/ casar com o pagamento
 
         function setBtn(txt, busy){
           btn.innerHTML = txt;
@@ -1077,7 +1077,6 @@ window.Carrinho = (() => {
         // 1) Grava o pedido (status "aguardando"). Sem .select(): anon só tem INSERT na tabela.
         try {
           var resPedido = await sb.from('pedidos').insert([{
-            numero: numero,
             cliente_nome: dados.nome,
             cliente_email: dados.email || null,
             cliente_tel: dados.tel,
@@ -1089,7 +1088,8 @@ window.Carrinho = (() => {
             desconto: 0,
             total: total,
             status: 'aguardando',
-            frete_tipo: frete.label || null
+            frete_tipo: frete.label || null,
+            pagamento_id: ref
           }]);
           if (resPedido.error){
             console.error('Erro ao gravar pedido:', resPedido.error);
@@ -1109,12 +1109,12 @@ window.Carrinho = (() => {
           var resp = await fetch('/api/criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: String(numero) })
+            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: ref })
           });
           var pag = await resp.json();
           if (!resp.ok || !pag.url){
             console.error('Erro criar-pagamento:', pag);
-            mostrarErro('Não foi possível gerar o pagamento. Tente novamente em instantes.');
+            mostrarErro('DEBUG pagamento: ' + JSON.stringify(pag).slice(0, 300));
             restaurar();
             return;
           }

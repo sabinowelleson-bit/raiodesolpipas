@@ -576,11 +576,7 @@
 
       <!-- Frete -->
       <div class="freight-section">
-        <div class="section-label">Calcular frete</div>
-        <div class="input-group">
-          <input type="text" placeholder="00000-000" value="68552-000" maxlength="9"/>
-          <button class="input-btn" type="button">Calcular</button>
-        </div>
+        <div class="section-label">Frete</div>
         <div class="freight-options">
           <label class="freight-opt selected">
             <div class="freight-opt-info">
@@ -609,10 +605,15 @@
       <!-- Cupom -->
       <div class="coupon-section">
         <div class="section-label">Cupom de desconto</div>
-        <div class="input-group">
-          <input type="text" placeholder="Digite o cupom"/>
-          <button class="input-btn" type="button">Aplicar</button>
+        <div class="input-group" id="coupon-input-group">
+          <input type="text" id="coupon-input" placeholder="Digite o cupom"/>
+          <button class="input-btn" type="button" id="coupon-btn">Aplicar</button>
         </div>
+        <div class="coupon-applied" id="coupon-applied" style="display:none">
+          <span>Cupom <span class="code" id="coupon-applied-code"></span></span>
+          <button type="button" id="coupon-remove" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;text-decoration:underline;font-weight:600">remover</button>
+        </div>
+        <div id="coupon-msg" style="font-size:13px;margin-top:8px;min-height:16px"></div>
       </div>
 
       <!-- Totais -->
@@ -624,6 +625,10 @@
         <div class="total-row" id="frete-row">
           <span id="sum-frete-label">Frete</span>
           <span id="sum-frete">&mdash;</span>
+        </div>
+        <div class="total-row discount" id="desconto-row" style="display:none">
+          <span id="sum-desconto-label">Desconto</span>
+          <span id="sum-desconto">- R$ 0,00</span>
         </div>
         <div class="total-row grand">
           <span>Total</span>
@@ -867,6 +872,8 @@ window.Carrinho = (() => {
     }); }
     function setText(id, txt){ var el = document.getElementById(id); if (el) el.textContent = txt; }
 
+    var cupomAplicado = null; // cupom validado e aplicado no carrinho
+
     // ---- FRETE (placeholder até integrar Correios na Etapa de checkout) ----
     function freteSelecionado(){
       var opt = document.querySelector('.freight-opt.selected');
@@ -949,12 +956,24 @@ window.Carrinho = (() => {
       var subtotal = Carrinho.subtotal();
       var frete = freteSelecionado();
       var freteVal = n > 0 ? frete.valor : 0;
-      var total = subtotal + freteVal;
+      var desconto = n > 0 ? calcularDesconto(subtotal, freteVal) : 0;
+      var total = subtotal + freteVal - desconto;
+      if (total < 0) total = 0;
 
       setText('sum-label', 'Subtotal (' + n + (n === 1 ? ' item' : ' itens') + ')');
       setText('sum-subtotal', brl(subtotal));
       setText('sum-frete-label', n > 0 ? ('Frete · ' + (frete.label || '—')) : 'Frete');
       setText('sum-frete', n > 0 ? brl(freteVal) : '—');
+      var descRow = document.getElementById('desconto-row');
+      if (descRow){
+        if (desconto > 0){
+          descRow.style.display = '';
+          setText('sum-desconto-label', 'Desconto' + (cupomAplicado ? ' (' + cupomAplicado.codigo + ')' : ''));
+          setText('sum-desconto', '- ' + brl(desconto));
+        } else {
+          descRow.style.display = 'none';
+        }
+      }
       setText('sum-total', brl(total));
 
       var inst = document.getElementById('sum-installments');
@@ -994,6 +1013,82 @@ window.Carrinho = (() => {
           atualizarTotais();
         });
       });
+    }
+
+    // ---- CUPOM DE DESCONTO ----
+    function calcularDesconto(subtotal, freteVal){
+      if (!cupomAplicado) return 0;
+      var c = cupomAplicado, d = 0;
+      if (c.tipo === 'percentual') d = subtotal * (Number(c.valor) || 0) / 100;
+      else if (c.tipo === 'fixo') d = Math.min(Number(c.valor) || 0, subtotal);
+      else if (c.tipo === 'frete_gratis') d = freteVal;
+      d = Math.round(d * 100) / 100;
+      if (d < 0) d = 0;
+      if (d > subtotal + freteVal) d = subtotal + freteVal;
+      return d;
+    }
+    function descricaoCupom(c){
+      if (c.tipo === 'percentual') return (Number(c.valor) || 0) + '% de desconto.';
+      if (c.tipo === 'fixo') return brl(Number(c.valor) || 0) + ' de desconto.';
+      return 'Frete gratis.';
+    }
+    function mostrarCupomMsg(msg, ok){
+      var el = document.getElementById('coupon-msg');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.style.color = ok ? 'var(--success)' : '#DC2626';
+    }
+    function renderCupomAplicado(){
+      var grupo = document.getElementById('coupon-input-group');
+      var aplicado = document.getElementById('coupon-applied');
+      var code = document.getElementById('coupon-applied-code');
+      if (cupomAplicado){
+        if (grupo) grupo.style.display = 'none';
+        if (aplicado) aplicado.style.display = '';
+        if (code) code.textContent = cupomAplicado.codigo;
+      } else {
+        if (grupo) grupo.style.display = '';
+        if (aplicado) aplicado.style.display = 'none';
+      }
+    }
+    async function aplicarCupom(){
+      var input = document.getElementById('coupon-input');
+      var codigo = input ? input.value.trim().toUpperCase() : '';
+      if (!codigo){ mostrarCupomMsg('Digite um codigo de cupom.', false); return; }
+      if (!sb){ mostrarCupomMsg('Nao foi possivel validar agora. Recarregue a pagina.', false); return; }
+      var btn = document.getElementById('coupon-btn');
+      var txt = btn ? btn.textContent : '';
+      if (btn){ btn.disabled = true; btn.textContent = '...'; }
+      var r = await sb.from('cupons').select('*').eq('codigo', codigo).eq('ativo', true).limit(1);
+      if (btn){ btn.disabled = false; btn.textContent = txt; }
+      if (r.error){ mostrarCupomMsg('Erro ao validar o cupom. Tente de novo.', false); console.error(r.error); return; }
+      var c = (r.data && r.data[0]) ? r.data[0] : null;
+      if (!c){ mostrarCupomMsg('Cupom invalido ou inativo.', false); return; }
+      if (c.validade){
+        var hoje = new Date(); hoje.setHours(0,0,0,0);
+        var venc = new Date(String(c.validade).slice(0,10) + 'T00:00:00');
+        if (venc < hoje){ mostrarCupomMsg('Esse cupom ja expirou.', false); return; }
+      }
+      cupomAplicado = c;
+      renderCupomAplicado();
+      atualizarTotais();
+      mostrarCupomMsg('Cupom aplicado! ' + descricaoCupom(c), true);
+    }
+    function removerCupom(){
+      cupomAplicado = null;
+      var input = document.getElementById('coupon-input');
+      if (input) input.value = '';
+      renderCupomAplicado();
+      atualizarTotais();
+      mostrarCupomMsg('', true);
+    }
+    function ligarCupom(){
+      var btn = document.getElementById('coupon-btn');
+      if (btn) btn.addEventListener('click', aplicarCupom);
+      var input = document.getElementById('coupon-input');
+      if (input) input.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); aplicarCupom(); } });
+      var rem = document.getElementById('coupon-remove');
+      if (rem) rem.addEventListener('click', removerCupom);
     }
 
     // ---- CHECKOUT: grava pedido (Supabase) + gera link de pagamento (Infinity Pay) ----
@@ -1060,7 +1155,9 @@ window.Carrinho = (() => {
         var frete = freteSelecionado();
         var subtotal = Carrinho.subtotal();
         var freteVal = frete.valor || 0;
-        var total = subtotal + freteVal;
+        var desconto = calcularDesconto(subtotal, freteVal);
+        var total = subtotal + freteVal - desconto;
+        if (total < 0) total = 0;
         var ref = 'RS-' + Date.now().toString(36).toUpperCase(); // referência do pedido (texto) p/ casar com o pagamento
 
         function setBtn(txt, busy){
@@ -1089,7 +1186,7 @@ window.Carrinho = (() => {
             itens: itens,
             subtotal: subtotal,
             frete: freteVal,
-            desconto: 0,
+            desconto: desconto,
             total: total,
             status: 'aguardando',
             frete_tipo: frete.label || null,
@@ -1113,7 +1210,7 @@ window.Carrinho = (() => {
           var resp = await fetch('/api/criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: ref })
+            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: ref, desconto: desconto })
           });
           var pag = await resp.json();
           if (!resp.ok || !pag.url){
@@ -1134,6 +1231,7 @@ window.Carrinho = (() => {
 
     document.addEventListener('DOMContentLoaded', function(){
       ligarFrete();
+      ligarCupom();
       ligarFinalizar();
       render();
     });

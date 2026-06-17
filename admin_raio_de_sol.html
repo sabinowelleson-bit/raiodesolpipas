@@ -1978,10 +1978,10 @@
           '<td><strong>'+esc(descLabel(c))+'</strong></td>'+
           '<td>'+esc(fmtData(c.validade))+'</td>'+
           '<td><div class="toggle'+on+'" title="Ativar/desativar" style="cursor:pointer" onclick="rsCupomToggle(\''+c.id+'\', this)"></div></td>'+
-          '<td style="white-space:nowrap">'+
-            '<button class="icon-action" title="Editar" onclick="rsCupomEditar(\''+c.id+'\')">'+editIcon+'</button> '+
+          '<td style="white-space:nowrap"><div style="display:flex;gap:6px;justify-content:flex-end">'+
+            '<button class="icon-action" title="Editar" onclick="rsCupomEditar(\''+c.id+'\')">'+editIcon+'</button>'+
             '<button class="icon-action danger" title="Apagar" onclick="rsCupomApagar(\''+c.id+'\', \''+codJs+'\')">'+delIcon+'</button>'+
-          '</td>'+
+          '</div></td>'+
         '</tr>';
       }).join('');
     }

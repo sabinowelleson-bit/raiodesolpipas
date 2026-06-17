@@ -9,7 +9,7 @@ const HANDLE = "raiodesolpipas";
 const INFINITYPAY_URL = "https://api.checkout.infinitepay.io/links";
 
 // O domínio do site, usado para redirecionar o cliente depois do pagamento.
-const SITE_URL = "https://raiodesolpipas.com.br";
+const SITE_URL = "https://www.raiodesolpipas.com.br";
 
 export default async function handler(req, res) {
   // 1) Só aceita requisições do tipo POST (que é como o site vai mandar o pedido).

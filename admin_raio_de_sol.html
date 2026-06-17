@@ -811,6 +811,13 @@
       min-height: 20px;
     }
 
+  
+    /* Modal de cupom */
+    .rs-modal { position: fixed; inset: 0; background: rgba(15,23,42,0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .rs-modal.hidden { display: none; }
+    .rs-modal-card { background: var(--bg-card); border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 24px 60px -12px rgba(0,0,0,0.35); }
+    .rs-modal-card h3 { font-size: 18px; margin: 0 0 20px; color: var(--text); }
+    .rs-modal-card .form-field { display: flex; flex-direction: column; gap: 6px; }
   </style>
 </head>
 <body>
@@ -1417,7 +1424,7 @@
             <h2>Cupons</h2>
             <p>Crie cupons de desconto para promoções, clientes fiéis ou datas comemorativas.</p>
           </div>
-          <button class="btn-primary">
+          <button class="btn-primary" onclick="rsCupomNovo()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Novo cupom
           </button>
@@ -1426,36 +1433,10 @@
         <div class="product-table">
           <table class="data-table">
             <thead>
-              <tr><th>Código</th><th>Tipo</th><th>Desconto</th><th>Usos</th><th>Validade</th><th>Ativo</th><th></th></tr>
+              <tr><th>Código</th><th>Tipo</th><th>Desconto</th><th>Validade</th><th>Ativo</th><th></th></tr>
             </thead>
-            <tbody>
-              <tr>
-                <td><span class="order-id">PIPEIRO10</span></td>
-                <td>Porcentagem</td>
-                <td><strong>10% off</strong></td>
-                <td>23 / ilimitado</td>
-                <td>31/12/2026</td>
-                <td><div class="toggle on"></div></td>
-                <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
-              </tr>
-              <tr>
-                <td><span class="order-id">FRETE-GRATIS</span></td>
-                <td>Frete grátis</td>
-                <td><strong>R$ 18,90</strong></td>
-                <td>8 / 50</td>
-                <td>15/06/2026</td>
-                <td><div class="toggle on"></div></td>
-                <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
-              </tr>
-              <tr>
-                <td><span class="order-id">PRIMEIRA-COMPRA</span></td>
-                <td>Valor fixo</td>
-                <td><strong>R$ 5 off</strong></td>
-                <td>112 / ilimitado</td>
-                <td>Sem validade</td>
-                <td><div class="toggle on"></div></td>
-                <td><button class="icon-action"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button></td>
-              </tr>
+            <tbody id="rs-tabela-cupons">
+              <tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Carregando cupons...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1522,6 +1503,7 @@
 
       document.getElementById('page-title').textContent = titleOverride || pageTitles[viewName] || 'Admin';
       if ((viewName === 'orders' || viewName === 'dashboard') && typeof carregarPedidos === 'function') carregarPedidos();
+      if (viewName === 'coupons' && typeof window.carregarCupons === 'function') window.carregarCupons();
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
@@ -1918,6 +1900,185 @@
     }
 
     window.carregarPedidos = carregar;
+  })();
+  </script>
+
+
+  <!-- Modal de cupom -->
+  <div id="rs-cupom-modal" class="rs-modal hidden">
+    <div class="rs-modal-card">
+      <h3 id="rs-cupom-modal-titulo">Novo cupom</h3>
+      <input type="hidden" id="rs-cupom-id"/>
+      <div class="form-field" style="margin-bottom:14px">
+        <label>Código</label>
+        <input type="text" id="rs-cupom-codigo" class="form-input" placeholder="EX: PIPEIRO10" style="text-transform:uppercase"/>
+      </div>
+      <div class="form-field" style="margin-bottom:14px">
+        <label>Tipo</label>
+        <select id="rs-cupom-tipo" class="form-select">
+          <option value="percentual">Porcentagem (%)</option>
+          <option value="fixo">Valor fixo (R$)</option>
+          <option value="frete_gratis">Frete grátis</option>
+        </select>
+      </div>
+      <div class="form-field" id="rs-cupom-valor-wrap" style="margin-bottom:14px">
+        <label id="rs-cupom-valor-label">Valor (%)</label>
+        <input type="number" id="rs-cupom-valor" class="form-input" placeholder="10" min="0" step="0.01"/>
+      </div>
+      <div class="form-field" style="margin-bottom:14px">
+        <label>Validade (opcional)</label>
+        <input type="date" id="rs-cupom-validade" class="form-input"/>
+        <div class="hint">Deixe em branco para nao ter validade.</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:10px;margin-bottom:18px;cursor:pointer">
+        <div class="toggle on" id="rs-cupom-ativo-toggle" onclick="this.classList.toggle('on')"></div>
+        <span style="font-size:14px;color:var(--text)">Cupom ativo</span>
+      </label>
+      <div id="rs-cupom-erro" style="color:var(--red);font-size:13px;margin-bottom:12px;min-height:16px"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="rsCupomFechar()">Cancelar</button>
+        <button class="btn-primary" id="rs-cupom-salvar-btn" onclick="rsCupomSalvar()">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Cupons (Supabase) ============ -->
+  <script>
+  (function(){
+    function sbC(){ return window._supabase || window.sb || null; }
+    function esc(x){ return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    function gv(id){ var e=document.getElementById(id); return e?e.value:''; }
+    function modalEl(){ return document.getElementById('rs-cupom-modal'); }
+    function fmtData(d){ if(!d) return 'Sem validade'; try{ var p=String(d).slice(0,10).split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }catch(e){ return d; } }
+    function tipoLabel(t){ return t==='percentual'?'Porcentagem':(t==='fixo'?'Valor fixo':'Frete gratis'); }
+    function descLabel(c){
+      if(c.tipo==='percentual') return (Number(c.valor)||0)+'% off';
+      if(c.tipo==='fixo') return 'R$ '+(Number(c.valor)||0).toFixed(2).replace('.',',')+' off';
+      return 'Frete gratis';
+    }
+    var editIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+    var delIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+    var cache = [];
+
+    async function carregarCupons(){
+      var c = sbC(); if(!c) return;
+      var tb = document.getElementById('rs-tabela-cupons'); if(!tb) return;
+      tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Carregando cupons...</td></tr>';
+      var r = await c.from('cupons').select('*').order('criado_em',{ascending:false});
+      if(r.error){ tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#DC2626">Erro: '+esc(r.error.message)+'</td></tr>'; console.error(r.error); return; }
+      cache = r.data || [];
+      if(!cache.length){ tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted)">Nenhum cupom ainda. Clique em \u201CNovo cupom\u201D.</td></tr>'; return; }
+      tb.innerHTML = cache.map(function(c){
+        var on = c.ativo ? ' on' : '';
+        var codJs = esc(c.codigo).replace(/'/g, "\\'");
+        return '<tr>'+
+          '<td><span class="order-id">'+esc(c.codigo)+'</span></td>'+
+          '<td>'+tipoLabel(c.tipo)+'</td>'+
+          '<td><strong>'+esc(descLabel(c))+'</strong></td>'+
+          '<td>'+esc(fmtData(c.validade))+'</td>'+
+          '<td><div class="toggle'+on+'" title="Ativar/desativar" style="cursor:pointer" onclick="rsCupomToggle(\''+c.id+'\', this)"></div></td>'+
+          '<td style="white-space:nowrap">'+
+            '<button class="icon-action" title="Editar" onclick="rsCupomEditar(\''+c.id+'\')">'+editIcon+'</button> '+
+            '<button class="icon-action danger" title="Apagar" onclick="rsCupomApagar(\''+c.id+'\', \''+codJs+'\')">'+delIcon+'</button>'+
+          '</td>'+
+        '</tr>';
+      }).join('');
+    }
+
+    function atualizarLabelValor(){
+      var t = gv('rs-cupom-tipo');
+      var wrap = document.getElementById('rs-cupom-valor-wrap');
+      var lbl = document.getElementById('rs-cupom-valor-label');
+      if(t==='frete_gratis'){ if(wrap) wrap.style.display='none'; }
+      else { if(wrap) wrap.style.display=''; if(lbl) lbl.textContent = (t==='percentual'?'Valor (%)':'Valor (R$)'); }
+    }
+
+    window.rsCupomNovo = function(){
+      document.getElementById('rs-cupom-modal-titulo').textContent = 'Novo cupom';
+      document.getElementById('rs-cupom-id').value = '';
+      document.getElementById('rs-cupom-codigo').value = '';
+      document.getElementById('rs-cupom-tipo').value = 'percentual';
+      document.getElementById('rs-cupom-valor').value = '';
+      document.getElementById('rs-cupom-validade').value = '';
+      var tg = document.getElementById('rs-cupom-ativo-toggle'); if(tg) tg.classList.add('on');
+      document.getElementById('rs-cupom-erro').textContent = '';
+      atualizarLabelValor();
+      modalEl().classList.remove('hidden');
+    };
+
+    window.rsCupomEditar = function(id){
+      var c = cache.filter(function(x){return x.id===id;})[0]; if(!c) return;
+      document.getElementById('rs-cupom-modal-titulo').textContent = 'Editar cupom';
+      document.getElementById('rs-cupom-id').value = c.id;
+      document.getElementById('rs-cupom-codigo').value = c.codigo;
+      document.getElementById('rs-cupom-tipo').value = c.tipo;
+      document.getElementById('rs-cupom-valor').value = (c.valor!=null ? c.valor : '');
+      document.getElementById('rs-cupom-validade').value = c.validade ? String(c.validade).slice(0,10) : '';
+      var tg = document.getElementById('rs-cupom-ativo-toggle'); if(tg){ if(c.ativo) tg.classList.add('on'); else tg.classList.remove('on'); }
+      document.getElementById('rs-cupom-erro').textContent = '';
+      atualizarLabelValor();
+      modalEl().classList.remove('hidden');
+    };
+
+    window.rsCupomFechar = function(){ modalEl().classList.add('hidden'); };
+
+    window.rsCupomSalvar = async function(){
+      var erro = document.getElementById('rs-cupom-erro'); erro.textContent = '';
+      var c = sbC(); if(!c){ erro.textContent='Sessao indisponivel.'; return; }
+      var id = gv('rs-cupom-id');
+      var codigo = gv('rs-cupom-codigo').trim().toUpperCase();
+      var tipo = gv('rs-cupom-tipo');
+      var valor = (tipo==='frete_gratis') ? 0 : parseFloat(gv('rs-cupom-valor'));
+      var validade = gv('rs-cupom-validade') || null;
+      var tg = document.getElementById('rs-cupom-ativo-toggle');
+      var ativo = tg ? tg.classList.contains('on') : true;
+
+      if(!codigo){ erro.textContent='Informe o codigo.'; return; }
+      if(tipo!=='frete_gratis'){
+        if(isNaN(valor) || valor<=0){ erro.textContent='Informe um valor valido.'; return; }
+        if(tipo==='percentual' && valor>100){ erro.textContent='Porcentagem nao pode passar de 100%.'; return; }
+      }
+
+      var btn = document.getElementById('rs-cupom-salvar-btn');
+      btn.disabled = true; var txt = btn.textContent; btn.textContent = 'Salvando...';
+      var payload = { codigo: codigo, tipo: tipo, valor: valor, validade: validade, ativo: ativo };
+      var resp = id ? await c.from('cupons').update(payload).eq('id', id)
+                    : await c.from('cupons').insert(payload);
+      btn.disabled = false; btn.textContent = txt;
+      if(resp.error){
+        var m = (resp.error.message||'').toLowerCase();
+        if(resp.error.code==='23505' || m.indexOf('duplicate')!==-1 || m.indexOf('unique')!==-1) erro.textContent='Ja existe um cupom com esse codigo.';
+        else erro.textContent = 'Erro ao salvar: '+resp.error.message;
+        return;
+      }
+      modalEl().classList.add('hidden');
+      carregarCupons();
+    };
+
+    window.rsCupomToggle = async function(id, el){
+      var c = sbC(); if(!c) return;
+      var novo = !(el && el.classList.contains('on'));
+      if(el) el.classList.toggle('on');
+      var r = await c.from('cupons').update({ativo: novo}).eq('id', id);
+      if(r.error){ if(el) el.classList.toggle('on'); alert('Erro ao atualizar: '+r.error.message); return; }
+      var it = cache.filter(function(x){return x.id===id;})[0]; if(it) it.ativo = novo;
+    };
+
+    window.rsCupomApagar = async function(id, codigo){
+      if(!confirm('Apagar o cupom '+codigo+'? Essa acao nao pode ser desfeita.')) return;
+      var c = sbC(); if(!c) return;
+      var r = await c.from('cupons').delete().eq('id', id);
+      if(r.error){ alert('Erro ao apagar: '+r.error.message); return; }
+      carregarCupons();
+    };
+
+    document.addEventListener('DOMContentLoaded', function(){
+      var sel = document.getElementById('rs-cupom-tipo');
+      if(sel) sel.addEventListener('change', atualizarLabelValor);
+    });
+
+    window.carregarCupons = carregarCupons;
   })();
   </script>
 

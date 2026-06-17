@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     // 2) Pega os itens do carrinho que o site enviou.
     //    Esperamos algo como: { itens: [{ descricao, quantidade, preco }] }
     //    onde "preco" vem em REAIS (ex: 25.90).
-    const { itens, order_nsu } = req.body || {};
+    const { itens, order_nsu, desconto } = req.body || {};
 
     // 3) Validação básica: precisa ter pelo menos 1 item.
     if (!Array.isArray(itens) || itens.length === 0) {
@@ -37,10 +37,28 @@ export default async function handler(req, res) {
       description: String(item.descricao || "Produto"),
     }));
 
+    // 4b) Aplica o desconto de cupom, se houver (desconto vem em REAIS).
+    //     Quando há desconto, consolidamos tudo em UM único item com o valor
+    //     final já abatido — evita preço negativo por linha e erro de arredondamento.
+    const descontoCents = Math.round((Number(desconto) || 0) * 100);
+    let itemsFinais = itemsFormatados;
+    if (descontoCents > 0) {
+      const totalCents = itemsFormatados.reduce((s, it) => s + it.price * it.quantity, 0);
+      let finalCents = totalCents - descontoCents;
+      if (finalCents < 0) finalCents = 0;
+      itemsFinais = [
+        {
+          quantity: 1,
+          price: finalCents,
+          description: "Pedido Raio de Sol Pipas (com desconto)",
+        },
+      ];
+    }
+
     // 5) Monta o corpo da requisição para o Infinity Pay.
     const payload = {
       handle: HANDLE,
-      items: itemsFormatados,
+      items: itemsFinais,
       // order_nsu = número do pedido no nosso sistema (opcional, mas útil pra rastrear).
       order_nsu: order_nsu || `pedido-${Date.now()}`,
       // Pra onde o cliente volta depois de pagar.

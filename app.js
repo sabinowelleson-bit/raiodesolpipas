@@ -145,6 +145,12 @@ function initAdmin() {
         if (nameEl && data.session.user) {
           nameEl.textContent = data.session.user.email.split('@')[0];
         }
+        // Já logado ao abrir/atualizar a página: carrega os pedidos e KPIs reais.
+        // Sem isto, o painel mostra o conteúdo estático até clicar num item do menu.
+        (function carregaQuandoPronto(tentativas) {
+          if (typeof window.carregarPedidos === 'function') { window.carregarPedidos(); return; }
+          if (tentativas > 0) setTimeout(function() { carregaQuandoPronto(tentativas - 1); }, 150);
+        })(15);
       }
     });
   }

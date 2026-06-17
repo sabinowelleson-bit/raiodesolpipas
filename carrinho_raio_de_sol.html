@@ -1158,6 +1158,12 @@ window.Carrinho = (() => {
         var desconto = calcularDesconto(subtotal, freteVal);
         var total = subtotal + freteVal - desconto;
         if (total < 0) total = 0;
+        if (total <= 0){
+          mostrarErro('O cupom cobriu o valor total do pedido (R$ 0,00). Adicione mais itens ao carrinho para finalizar a compra.');
+          var formZero = document.getElementById('delivery-form');
+          if (formZero) formZero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
         var ref = 'RS-' + Date.now().toString(36).toUpperCase(); // referência do pedido (texto) p/ casar com o pagamento
 
         function setBtn(txt, busy){

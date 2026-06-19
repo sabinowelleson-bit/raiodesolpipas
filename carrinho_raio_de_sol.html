@@ -578,21 +578,21 @@
       <div class="freight-section">
         <div class="section-label">Frete</div>
         <div class="freight-options">
-          <label class="freight-opt selected">
+          <label class="freight-opt selected" data-frete="pac">
             <div class="freight-opt-info">
               <div class="name">PAC · Correios</div>
               <div class="time">6 a 10 dias úteis</div>
             </div>
             <div class="freight-opt-price">R$ 18,90</div>
           </label>
-          <label class="freight-opt">
+          <label class="freight-opt" data-frete="sedex">
             <div class="freight-opt-info">
               <div class="name">SEDEX · Correios</div>
               <div class="time">2 a 4 dias úteis</div>
             </div>
             <div class="freight-opt-price">R$ 32,50</div>
           </label>
-          <label class="freight-opt">
+          <label class="freight-opt" data-frete="retirada">
             <div class="freight-opt-info">
               <div class="name">Retirar na loja</div>
               <div class="time">Av. Graciliano Ramos, Planalto</div>
@@ -883,7 +883,8 @@ window.Carrinho = (() => {
       var txt = precoEl ? precoEl.textContent.trim() : '';
       var valor = /gr[áa]tis/i.test(txt) ? 0 : (parseFloat(txt.replace(/[^\d,]/g, '').replace(',', '.')) || 0);
       var label = nomeEl ? nomeEl.textContent.split('·')[0].trim() : '';
-      return { valor: valor, label: label };
+      var tipo = opt.getAttribute('data-frete') || 'retirada';
+      return { valor: valor, label: label, tipo: tipo };
     }
 
     // ---- RENDER DE UM ITEM ----
@@ -1181,51 +1182,32 @@ window.Carrinho = (() => {
 
         setBtn('Gerando pagamento...', true);
 
-        // 1) Grava o pedido (status "aguardando"). Sem .select(): anon só tem INSERT na tabela.
-        try {
-          var resPedido = await sb.from('pedidos').insert([{
-            cliente_nome: dados.nome,
-            cliente_email: dados.email || null,
-            cliente_tel: dados.tel,
-            cliente_cep: dados.cep,
-            cliente_end: dados.end,
-            itens: itens,
-            subtotal: subtotal,
-            frete: freteVal,
-            desconto: desconto,
-            total: total,
-            status: 'aguardando',
-            frete_tipo: frete.label || null,
-            pagamento_id: ref
-          }]);
-          if (resPedido.error){
-            console.error('Erro ao gravar pedido:', resPedido.error);
-            mostrarErro('Não conseguimos registrar seu pedido. Tente novamente em instantes.');
-            restaurar();
-            return;
-          }
-        } catch (e){
-          console.error(e);
-          mostrarErro('Erro ao registrar o pedido. Verifique sua conexão e tente novamente.');
-          restaurar();
-          return;
-        }
+        // Manda só IDs + quantidades + cupom + frete + dados do cliente.
+        // O SERVIDOR busca os preços reais, valida o cupom, calcula o total e
+        // grava o pedido — o navegador não decide preço (proteção contra fraude).
+        var itensPayload = itens.map(function(it){
+          return { produto_id: it.produto_id, variante_id: it.variante_id || null, qtd: Number(it.qtd) || 1 };
+        });
+        var cupomCodigo = (typeof cupomAplicado !== 'undefined' && cupomAplicado) ? cupomAplicado.codigo : null;
 
-        // 2) Gera o link de pagamento via função-ponte (Infinity Pay).
         try {
           var resp = await fetch('/api/criar-pagamento', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ itens: itensParaPagamento(itens, frete), order_nsu: ref, desconto: desconto })
+            body: JSON.stringify({
+              itens: itensPayload,
+              frete_tipo: frete.tipo,
+              cupom: cupomCodigo,
+              cliente: { nome: dados.nome, email: dados.email || null, tel: dados.tel, cep: dados.cep, end: dados.end }
+            })
           });
-          var pag = await resp.json();
+          var pag = await resp.json().catch(function(){ return {}; });
           if (!resp.ok || !pag.url){
             console.error('Erro criar-pagamento:', pag);
-            mostrarErro('Não foi possível gerar o pagamento. Tente novamente em instantes.');
+            mostrarErro((pag && pag.erro) ? pag.erro : 'Não foi possível gerar o pagamento. Tente novamente em instantes.');
             restaurar();
             return;
           }
-          // 3) Redireciona pro checkout da Infinity Pay.
           window.location.href = pag.url;
         } catch (e){
           console.error(e);

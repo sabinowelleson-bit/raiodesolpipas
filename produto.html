@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#A8D0F5" />
   <title id="page-title">Produto — Raio de Sol Pipas</title>
+  <meta name="description" content="Pipas, linhas, carretilhas e acessórios na Raio de Sol Pipas. Envio para todo o Brasil e atendimento pelo WhatsApp."/>
+  <meta property="og:title" content="Raio de Sol Pipas — Loja oficial"/>
+  <meta property="og:description" content="Pipas, linhas, carretilhas e acessórios. Atendimento pelo WhatsApp e envio para todo o Brasil."/>
+  <meta property="og:image" content="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png"/>
+  <meta property="og:url" content="https://www.raiodesolpipas.com.br/produto.html"/>
+  <meta property="og:type" content="product"/>
+  <meta property="og:locale" content="pt_BR"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+  <meta name="twitter:image" content="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png"/>
+  <link rel="canonical" id="canonical-link" href="https://www.raiodesolpipas.com.br/produto.html"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
@@ -477,6 +487,9 @@ window.Carrinho = (() => {
       return Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
     // Monta o rótulo de uma variante: "Azul · 45cm", "Azul", ou "45cm"
+    function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+    var SEM_FOTO = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='600'%20height='600'%3E%3Crect%20width='600'%20height='600'%20fill='%23F0F7FF'/%3E%3Ctext%20x='300'%20y='312'%20font-family='Arial,sans-serif'%20font-size='32'%20fill='%238AA0BC'%20text-anchor='middle'%3EFoto%20em%20breve%3C/text%3E%3C/svg%3E";
+
     function rotuloVariante(v) {
       var partes = [];
       if (v.cor) partes.push(v.cor);
@@ -496,7 +509,7 @@ window.Carrinho = (() => {
       var temVariantes = variantes.length > 0;
 
       // Foto
-      var foto = produto.imagem_url || 'https://via.placeholder.com/600x600/F0F7FF/8AA0BC?text=' + encodeURIComponent(produto.nome);
+      var foto = produto.imagem_url || SEM_FOTO;
 
       // Monta os botões de variação
       var variacoesHTML = '';
@@ -509,7 +522,7 @@ window.Carrinho = (() => {
                 var esgotada = (Number(v.estoque) || 0) <= 0;
                 return '<button class="var-opcao' + (esgotada ? ' esgotada' : '') + '" ' +
                   'data-idx="' + i + '"' + (esgotada ? ' disabled' : '') + '>' +
-                  rotuloVariante(v) +
+                  esc(rotuloVariante(v)) +
                 '</button>';
               }).join('') +
             '</div>' +
@@ -518,11 +531,11 @@ window.Carrinho = (() => {
 
       alvo.innerHTML =
         '<div class="produto-wrap">' +
-          '<div class="produto-media"><img src="' + foto + '" alt="' + produto.nome + '"/></div>' +
+          '<div class="produto-media"><img src="' + foto + '" alt="' + esc(produto.nome) + '"/></div>' +
           '<div class="produto-detalhe">' +
-            '<span class="produto-cat">' + (produto.categoria || 'Produto') + '</span>' +
-            '<h1 class="produto-nome">' + produto.nome + '</h1>' +
-            (produto.descricao ? '<p class="produto-desc">' + produto.descricao + '</p>' : '') +
+            '<span class="produto-cat">' + esc(produto.categoria || 'Produto') + '</span>' +
+            '<h1 class="produto-nome">' + esc(produto.nome) + '</h1>' +
+            (produto.descricao ? '<p class="produto-desc">' + esc(produto.descricao) + '</p>' : '') +
             variacoesHTML +
             '<div class="produto-preco-bloco">' +
               '<div class="produto-preco" id="preco-display">—</div>' +
@@ -730,6 +743,19 @@ window.Carrinho = (() => {
       // Atualiza título e breadcrumb
       document.getElementById('page-title').textContent = produto.nome + ' — Raio de Sol Pipas';
       document.getElementById('breadcrumb-nome').textContent = produto.nome;
+
+      // Atualiza preview/SEO com os dados do produto (para navegadores e crawlers com JS).
+      (function(){
+        var urlProd = 'https://www.raiodesolpipas.com.br/produto.html?id=' + encodeURIComponent(produto.id);
+        var fotoProd = produto.imagem_url || 'https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png';
+        function setMeta(sel, val){ var m = document.querySelector(sel); if (m && val) m.setAttribute('content', val); }
+        setMeta('meta[property="og:title"]', produto.nome + ' \u2014 Raio de Sol Pipas');
+        if (produto.descricao) { setMeta('meta[property="og:description"]', produto.descricao); setMeta('meta[name="description"]', produto.descricao); }
+        setMeta('meta[property="og:image"]', fotoProd);
+        setMeta('meta[name="twitter:image"]', fotoProd);
+        setMeta('meta[property="og:url"]', urlProd);
+        var can = document.getElementById('canonical-link'); if (can) can.setAttribute('href', urlProd);
+      })();
 
       render();
     }

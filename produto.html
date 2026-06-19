@@ -187,6 +187,58 @@
       border-top: 1px solid var(--border); padding: 32px 0; margin-top: 40px;
       text-align: center; color: var(--text-dim); font-size: 13px;
     }
+  
+    /* Ícone do carrinho no header */
+    .header-right { display: flex; align-items: center; gap: 24px; }
+    .header-cart {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      width: 42px; height: 42px; border-radius: 50%;
+      color: var(--text); background: var(--bg-elev);
+      transition: background .15s, transform .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .header-cart:hover { background: var(--accent-soft); color: var(--accent); transform: translateY(-1px); }
+    .header-cart-badge {
+      position: absolute; top: -4px; right: -4px;
+      min-width: 20px; height: 20px; padding: 0 5px;
+      border-radius: 999px; background: var(--accent-3); color: #fff;
+      font-size: 11px; font-weight: 800; font-family: var(--font-mono);
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--bg); box-sizing: border-box;
+    }
+    @keyframes rsBadgePulse { 0%{transform:scale(1)} 30%{transform:scale(1.55)} 60%{transform:scale(.9)} 100%{transform:scale(1)} }
+    .header-cart-badge.pulse { animation: rsBadgePulse .5s ease; }
+
+    /* Toast de confirmação */
+    .rs-toast {
+      position: fixed; left: 50%; bottom: 24px;
+      transform: translateX(-50%) translateY(170%);
+      z-index: 9999; display: flex; align-items: center; gap: 12px;
+      background: var(--text); color: #fff;
+      padding: 14px 16px; border-radius: 14px;
+      box-shadow: 0 16px 48px -8px rgba(11,30,63,.5);
+      max-width: calc(100vw - 32px);
+      opacity: 0; pointer-events: none;
+      transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .4s;
+    }
+    .rs-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+    .rs-toast-check {
+      flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--success); display: flex; align-items: center; justify-content: center;
+    }
+    .rs-toast-info { line-height: 1.3; min-width: 0; }
+    .rs-toast-info strong { display: block; font-size: 14px; font-weight: 700; }
+    .rs-toast-info span { display: block; font-size: 12.5px; color: rgba(255,255,255,.75); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rs-toast-btn {
+      flex-shrink: 0; margin-left: 4px; background: #fff; color: var(--text);
+      padding: 9px 14px; border-radius: 9px; font-size: 13px; font-weight: 800;
+      text-decoration: none; white-space: nowrap;
+    }
+    .rs-toast-btn:hover { background: #EAF2FF; }
+
+    /* Botão confirmando */
+    .add-cart-btn.added { background: var(--success) !important; }
   </style>
 </head>
 <body>
@@ -196,14 +248,20 @@
       <a href="index.html" class="brand" aria-label="Raio de Sol Pipas">
         <img src="https://kscqoczfdtoanjdoidtl.supabase.co/storage/v1/object/public/assets/logo_light.png" alt="Raio de Sol Pipas" class="brand-logo"/>
       </a>
-      <nav class="nav">
-        <a href="catalogo.html?cat=Pipas">Pipas</a>
-        <a href="catalogo.html?cat=Linhas">Linhas</a>
-        <a href="catalogo.html?cat=Carretilhas">Carretilhas</a>
-        <a href="catalogo.html?cat=Rabiolas">Rabiolas</a>
-        <a href="catalogo.html?cat=Raias">Raias</a>
-        <a href="catalogo.html?cat=Kits">Kits</a>
-      </nav>
+      <div class="header-right">
+        <nav class="nav">
+          <a href="catalogo.html?cat=Pipas">Pipas</a>
+          <a href="catalogo.html?cat=Linhas">Linhas</a>
+          <a href="catalogo.html?cat=Carretilhas">Carretilhas</a>
+          <a href="catalogo.html?cat=Rabiolas">Rabiolas</a>
+          <a href="catalogo.html?cat=Raias">Raias</a>
+          <a href="catalogo.html?cat=Kits">Kits</a>
+        </nav>
+        <a href="carrinho_raio_de_sol.html" class="header-cart" aria-label="Ver carrinho">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="header-cart-badge" data-carrinho-badge style="display:none">0</span>
+        </a>
+      </div>
     </div>
   </header>
 
@@ -566,6 +624,17 @@ window.Carrinho = (() => {
       input.value = novo;
     }
 
+    var _rsToastTimer = null;
+    function mostrarToast(qtd, nome) {
+      var t = document.getElementById('rs-toast');
+      if (!t) return;
+      var sub = document.getElementById('rs-toast-sub');
+      if (sub) sub.textContent = qtd + (qtd > 1 ? ' itens' : ' item') + (nome ? ' · ' + nome : '');
+      t.classList.add('show');
+      clearTimeout(_rsToastTimer);
+      _rsToastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3500);
+    }
+
     function adicionarAoCarrinho() {
       var aviso = document.getElementById('aviso');
       // Se tem variantes e nenhuma foi escolhida, avisa
@@ -602,9 +671,29 @@ window.Carrinho = (() => {
         estoque:     estoque
       });
 
-      aviso.style.color = 'var(--success)';
-      aviso.innerHTML = qtd + 'x adicionado ao carrinho — ' +
-        '<a href="carrinho_raio_de_sol.html" style="color:var(--accent);text-decoration:underline;font-weight:700">ver carrinho</a>';
+      // limpa erro anterior e dá feedback forte
+      aviso.textContent = '';
+
+      // 1) toast bem visível (sobreposto, funciona no celular)
+      mostrarToast(qtd, produto.nome);
+
+      // 2) botão pisca confirmando
+      var btnAdd = document.getElementById('btn-add');
+      if (btnAdd) {
+        if (!btnAdd.getAttribute('data-label')) btnAdd.setAttribute('data-label', btnAdd.textContent);
+        btnAdd.textContent = '✓ Adicionado!';
+        btnAdd.classList.add('added');
+        clearTimeout(window._btnAddTimer);
+        window._btnAddTimer = setTimeout(function(){
+          btnAdd.textContent = btnAdd.getAttribute('data-label') || 'Adicionar ao carrinho';
+          btnAdd.classList.remove('added');
+        }, 1600);
+      }
+
+      // 3) badge do header pulsa
+      document.querySelectorAll('[data-carrinho-badge]').forEach(function(b){
+        b.classList.remove('pulse'); void b.offsetWidth; b.classList.add('pulse');
+      });
     }
 
     // ---- INIT ----
@@ -649,5 +738,17 @@ window.Carrinho = (() => {
   })();
   </script>
 
+
+  <!-- Toast de confirmação (adicionar ao carrinho) -->
+  <div class="rs-toast" id="rs-toast" role="status" aria-live="polite">
+    <div class="rs-toast-check">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <div class="rs-toast-info">
+      <strong>Adicionado ao carrinho!</strong>
+      <span id="rs-toast-sub"></span>
+    </div>
+    <a class="rs-toast-btn" href="carrinho_raio_de_sol.html">Ver carrinho</a>
+  </div>
 </body>
 </html>

@@ -17,6 +17,7 @@
   <link rel="canonical" id="canonical-link" href="https://www.raiodesolpipas.com.br/produto.html"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://kscqoczfdtoanjdoidtl.supabase.co" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400..800&family=JetBrains+Mono:wght@400..600&display=swap" rel="stylesheet">
   <link rel="icon" type="image/x-icon" href="favicon.ico"/>
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
@@ -735,7 +736,6 @@ window.Carrinho = (() => {
       var respVar = await sb.from('variantes').select('*').eq('produto_id', idNum);
       var listaVar = (respVar.error || !respVar.data) ? [] : respVar.data;
       if (respVar.error) console.error('Erro ao buscar variantes:', respVar.error);
-      console.log('Variantes encontradas para produto', idNum, ':', listaVar);
 
       // Só variantes ativas
       variantes = listaVar.filter(function(v){ return v.ativo !== false; });

@@ -14,6 +14,14 @@ const HANDLE = "raiodesolpipas";
 const INFINITYPAY_URL = "https://api.checkout.infinitepay.io/links";
 const SITE_URL = "https://www.raiodesolpipas.com.br";
 
+// Origens permitidas a chamar este endpoint a partir do navegador.
+// Bloqueia abuso cross-origin (spam de pedidos a partir de outro site).
+// Requisições same-origin / server-to-server (sem header Origin) seguem permitidas.
+const ALLOWED_ORIGINS = [
+  "https://www.raiodesolpipas.com.br",
+  "https://raiodesolpipas.com.br",
+];
+
 // Fonte da verdade dos fretes (no servidor, não no cliente).
 const FRETES = {
   pac:      { valor: 18.90, label: "PAC" },
@@ -36,6 +44,13 @@ async function sbGet(path, serviceKey) {
 }
 
 export default async function handler(req, res) {
+  // Checagem de origem (anti-abuso). Só barra quando o navegador ENVIA um Origin
+  // que não está na allowlist — assim não quebra chamadas same-origin/sem Origin.
+  const origin = req.headers && req.headers.origin;
+  if (origin && !ALLOWED_ORIGINS.includes(origin)) {
+    return res.status(403).json({ erro: "Origem não autorizada." });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ erro: "Método não permitido. Use POST." });
   }
@@ -84,25 +99,53 @@ export default async function handler(req, res) {
     }
 
     // 3) Monta os itens autoritativos + subtotal
+    // Regras: quantidade inteira >= 1; estoque=null => não gerenciado (sem teto);
+    // estoque=0 => ESGOTADO (rejeita); variante precisa pertencer ao produto e estar ativa.
     const itensFinais = [];
     let subtotal = 0;
     for (const it of itens) {
-      const qtd = Math.max(1, Number(it.qtd) || 1);
-      let nome, preco, cor = "", tamanho = "";
+      const qtd = Math.max(1, Math.floor(Number(it.qtd) || 1));
+      let nome, preco, cor = "", tamanho = "", estoque = null;
 
       if (it.variante_id) {
         const v = varMap[String(it.variante_id)];
         if (!v) return res.status(400).json({ erro: "Um item do carrinho não está mais disponível." });
+        // Integridade: a variante precisa pertencer ao produto enviado e estar ativa.
+        const prodIdEnviado = parseInt(it.produto_id, 10);
+        if (!isNaN(prodIdEnviado) && Number(v.produto_id) !== prodIdEnviado) {
+          return res.status(400).json({ erro: "Item inválido (variante não corresponde ao produto)." });
+        }
+        if (v.ativo === false) {
+          return res.status(400).json({ erro: "Um item do carrinho não está mais disponível." });
+        }
         const p = prodMap[String(v.produto_id)] || prodMap[String(it.produto_id)];
+        if (p && p.ativo === false) {
+          return res.status(400).json({ erro: "Um item do carrinho não está mais disponível." });
+        }
         nome = p ? p.nome : "Produto";
         preco = precoReal(v);
         cor = v.cor || "";
         tamanho = v.tamanho || "";
+        estoque = (v.estoque != null) ? Number(v.estoque) : null;
       } else {
         const p = prodMap[String(it.produto_id)];
         if (!p) return res.status(400).json({ erro: "Um item do carrinho não está mais disponível." });
+        if (p.ativo === false) {
+          return res.status(400).json({ erro: "Um item do carrinho não está mais disponível." });
+        }
         nome = p.nome;
         preco = precoReal(p);
+        estoque = (p.estoque != null) ? Number(p.estoque) : null;
+      }
+
+      // Controle de estoque (anti-overselling). estoque=0 => esgotado.
+      if (estoque != null) {
+        if (estoque <= 0) {
+          return res.status(409).json({ erro: '"' + nome + '" está esgotado.' });
+        }
+        if (qtd > estoque) {
+          return res.status(409).json({ erro: 'Estoque insuficiente para "' + nome + '". Disponível: ' + estoque + '.' });
+        }
       }
 
       subtotal += preco * qtd;
@@ -148,7 +191,9 @@ export default async function handler(req, res) {
     }
 
     // 5) Grava o pedido (status aguardando) com a service_role
-    const ref = "RS-" + Date.now().toString(36).toUpperCase();
+    // ref único: timestamp + aleatório (evita colisão em ms simultâneos / double-click).
+    const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+    const ref = "RS-" + Date.now().toString(36).toUpperCase() + "-" + rand;
     const insPedido = await fetch(`${SUPABASE_URL}/rest/v1/pedidos`, {
       method: "POST",
       headers: {

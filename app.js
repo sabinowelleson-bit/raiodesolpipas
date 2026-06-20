@@ -283,7 +283,7 @@ function gerarCardHTML(p) {
   return '<article class="product-card">' +
     '<div class="product-media">' +
       (p.badge ? '<div class="product-badges"><span class="pill rank gold">' + esc(p.badge) + '</span></div>' : '') +
-      '<img class="product-photo" src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
+      '<img class="product-photo" src="' + esc(foto) + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="product-info">' +
       '<span class="product-cat">' + esc(p.categoria || 'Produto') + '</span>' +
@@ -314,7 +314,7 @@ function gerarCatCardHTML(p) {
 
   return '<article class="cat-card-mini">' +
     '<div class="cat-card-mini-media">' +
-      '<img src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
+      '<img src="' + esc(foto) + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="cat-card-mini-body">' +
       '<span class="cat-card-mini-cat">' + esc(p.categoria || 'Produto') + '</span>' +

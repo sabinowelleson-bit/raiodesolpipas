@@ -24,6 +24,16 @@ function formatarPreco(valor) {
   });
 }
 
+// Escapa texto antes de injetar via innerHTML (proteção XSS). Os dados de
+// produto vêm do admin, mas escapamos por segurança e p/ não quebrar com < & ".
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+// Placeholder local (sem depender de serviço externo) p/ produto sem foto.
+var SEM_FOTO = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='600'%20height='600'%3E%3Crect%20width='600'%20height='600'%20fill='%23F0F7FF'/%3E%3Ctext%20x='300'%20y='312'%20font-family='Arial,sans-serif'%20font-size='32'%20fill='%238AA0BC'%20text-anchor='middle'%3EFoto%20em%20breve%3C/text%3E%3C/svg%3E";
+
 function linkWhatsApp(produto) {
   const texto = 'Olá! Vi o site e quero ' + produto.nome + ' (' + formatarPreco(produto.preco_promo || produto.preco) + '). Pode me passar as formas de pagamento?';
   return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(texto);
@@ -175,8 +185,8 @@ function initAdmin() {
       var est = estoqueTotal(p);
       var estTxt = (est != null ? est : '—') + (nVars > 0 ? ' <span style="font-size:10px;color:#64748B">(' + nVars + ' var.)</span>' : '');
       return '<tr>' +
-        '<td><strong>' + p.nome + '</strong><br/>' +
-        '<span style="font-size:11px;color:#64748B">' + (p.categoria || '—') + '</span></td>' +
+        '<td><strong>' + esc(p.nome) + '</strong><br/>' +
+        '<span style="font-size:11px;color:#64748B">' + esc(p.categoria || '—') + '</span></td>' +
         '<td>' + precoTxt + '</td>' +
         '<td>' + estTxt + '</td>' +
         '<td style="text-align:center">' + (p.destaque ? '⭐ Sim' : '—') + '</td>' +
@@ -268,16 +278,16 @@ function gerarCardHTML(p) {
   var precoAtual = precoExibicao(p);
   var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
   var parcela = precoAtual / 12;
-  var foto = p.imagem_url || 'https://via.placeholder.com/400x400?text=Raio+de+Sol+Pipas';
+  var foto = p.imagem_url || SEM_FOTO;
 
   return '<article class="product-card">' +
     '<div class="product-media">' +
-      (p.badge ? '<div class="product-badges"><span class="pill rank gold">' + p.badge + '</span></div>' : '') +
-      '<img class="product-photo" src="' + foto + '" alt="' + p.nome + '" loading="lazy"/>' +
+      (p.badge ? '<div class="product-badges"><span class="pill rank gold">' + esc(p.badge) + '</span></div>' : '') +
+      '<img class="product-photo" src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="product-info">' +
-      '<span class="product-cat">' + (p.categoria || 'Produto') + '</span>' +
-      '<h3 class="product-name">' + p.nome + '</h3>' +
+      '<span class="product-cat">' + esc(p.categoria || 'Produto') + '</span>' +
+      '<h3 class="product-name">' + esc(p.nome) + '</h3>' +
       '<span class="product-stock">' + (p.estoque > 0 ? p.estoque + ' unidades' : 'Sob consulta') + '</span>' +
       '<div class="product-price">' +
         '<span class="current">' + formatarPreco(precoAtual) + '</span>' +
@@ -297,18 +307,18 @@ function gerarCardHTML(p) {
 
 // Card para catálogo (cat-card-mini)
 function gerarCatCardHTML(p) {
-  var foto = p.imagem_url || 'https://via.placeholder.com/400x400?text=Raio+de+Sol+Pipas';
+  var foto = p.imagem_url || SEM_FOTO;
   var temVariantes = (p.variantes || []).filter(function(v){ return v.ativo !== false; }).length > 0;
   var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
   var precoAtual = precoExibicao(p);
 
   return '<article class="cat-card-mini">' +
     '<div class="cat-card-mini-media">' +
-      '<img src="' + foto + '" alt="' + p.nome + '" loading="lazy"/>' +
+      '<img src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="cat-card-mini-body">' +
-      '<span class="cat-card-mini-cat">' + (p.categoria || 'Produto') + '</span>' +
-      '<h3>' + p.nome + '</h3>' +
+      '<span class="cat-card-mini-cat">' + esc(p.categoria || 'Produto') + '</span>' +
+      '<h3>' + esc(p.nome) + '</h3>' +
       '<div class="cat-card-mini-foot">' +
         '<span class="price">' + formatarPreco(precoAtual) + '</span>' +
         '<a href="produto.html?id=' + p.id + '" class="add-btn" title="Ver produto">' +

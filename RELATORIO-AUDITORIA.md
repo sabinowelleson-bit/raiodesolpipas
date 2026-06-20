@@ -7,15 +7,15 @@
 
 ---
 
-## ⚠️ 0. DECISÕES HUMANAS PENDENTES (o dono precisa decidir — eu NÃO decidi nenhuma)
+## ⚠️ 0. DECISÕES HUMANAS — STATUS
 
-| # | Tema | Situação | O que decidir |
-|---|------|----------|----------------|
-| H1 | **"12x sem juros" + "5% off no Pix"** | `carrinho_raio_de_sol.html:984-985` mostram ao cliente "12x R$x sem juros" e "5% off no Pix", mas o servidor cobra o **valor cheio** (sem desconto Pix; parcelamento é só `total/12` visual). | Aplicar de verdade no servidor (5% no Pix + parcelas reais conforme termos da InfinitePay) **ou** ajustar/remover os textos. Depende dos termos reais da InfinitePay. **Não toquei.** |
-| H2 | **Remover INSERT anônimo em `pedidos` (RLS)** | SQL pronto em `sql/01_rls_policies.sql`. | Só aplicar **depois** de confirmar que `/api/criar-pagamento` está deployado e gravando (senão o checkout para de gravar). |
-| H3 | **Exposição de cupons** | `carrinho_raio_de_sol.html:1064` lê a tabela `cupons` com a **anon key** (`select('*')`) para mostrar o desconto na hora → dá pra listar todos os cupons. O servidor já revalida, então **não é fraude de preço**, mas vaza códigos. | Restringir o RLS de `cupons` (anon deixa de ler) **quebra esse preview**. Decidir: criar um endpoint `/api/validar-cupom` (servidor) e então fechar o RLS, ou aceitar a exposição. |
-| H4 | **CSP (Content-Security-Policy)** | Não adicionei. O site tem MUITO script/estilo inline; um CSP errado quebra tudo. | Quero propor uma policy e testar num **preview** da Vercel antes de produção. Aprova? |
-| H5 | **Redirect apex → www** | Canônico é `www`. Recomendado configurar no **painel da Vercel** (não por host no `vercel.json`, risco de loop). | Confirmar no painel. |
+| # | Tema | Situação | Status |
+|---|------|----------|--------|
+| H1 | **"12x sem juros" + "5% off no Pix"** | O servidor cobra o valor cheio. Decisão do dono: **remover os textos**. | ✅ **RESOLVIDO** — removidas as frases "12x sem juros"/"5% off no Pix" e o badge "12x" de `produto.html`, `carrinho_raio_de_sol.html` e `app.js`, sem deixar elemento vazio. Mantidos badge PIX (método real) e aviso de confirmação rápida do Pix. |
+| H2 | **Remover INSERT anônimo em `pedidos` (RLS)** | — | ✅ **FEITO pelo dono** direto no Supabase: dropadas as policies de INSERT anônimo (`site cria pedido`, `pedidos_insert_anon`) + `reload schema`. |
+| H3 | **Exposição de cupons** | `carrinho_raio_de_sol.html` lê `cupons` com a **anon key** para o preview de desconto → vaza códigos. O servidor já revalida, então **não é fraude de preço**. | ⏳ **PENDENTE (por opção do dono)** — não fechar cupons hoje. Fechar o RLS de `cupons` exige antes um `/api/validar-cupom` (não construído nesta rodada). |
+| H4 | **CSP (Content-Security-Policy)** | Não adicionado. O site tem MUITO script/estilo inline; um CSP errado quebra tudo. | ⏳ **PENDENTE** — propor policy e testar num **preview** da Vercel antes de produção. |
+| H5 | **Redirect apex → www** | Canônico é `www`. Configurar no **painel da Vercel** (não por host no `vercel.json`, risco de loop). | ⏳ **PENDENTE** — confirmar no painel. |
 
 ---
 
@@ -26,7 +26,7 @@ O projeto está, no geral, **bem construído em segurança de preço**: o servid
 Os achados mais sérios desta passada e o que foi feito:
 
 - 🔴 **XSS refletido** via `?cat=` no catálogo → **corrigido**.
-- 🔴 **Overselling**: o servidor não checava estoque → **corrigido** na criação do pedido (a baixa pós-pagamento ficou como SQL pronto, pendente de deploy no banco).
+- 🔴 **Overselling**: o servidor não checava estoque → **RESOLVIDO de ponta a ponta**: a criação do pedido rejeita oversell e a função `baixar_estoque()` (no banco) decrementa o estoque na confirmação do pagamento, chamada pelo webhook só na transição `aguardando→pago` (1 linha = sem baixa dupla).
 - 🟠 **Integridade de variante** (variante de outro produto / inativa) não validada → **corrigido**.
 - 🟠 **Sem `.gitignore`** (risco de vazar `.env`) → **corrigido**.
 - 🟠 **Cupons expostos à anon key** → diagnosticado; correção depende de decisão H3.
@@ -64,10 +64,11 @@ Os achados mais sérios desta passada e o que foi feito:
 O parâmetro `?cat=` ia para `innerHTML` sem escape na mensagem "Nenhum produto em <cat>". Payload `?cat=<img src=x onerror=alert(1)>` executava.
 **Correção:** envolvido em `esc(nomeCat)`. ✅ Validado (parser OK; `esc()` existe no arquivo).
 
-**C2 — Overselling (estoque não verificado no servidor)** · `api/criar-pagamento.js`
+**C2 — Overselling (estoque não verificado no servidor)** · `api/criar-pagamento.js` + `api/webhook.js` + função no banco — ✅ **RESOLVIDO**
 O servidor montava o pedido sem checar estoque → era possível comprar mais que o disponível.
-**Correção (na criação do pedido):** rejeita `estoque=0` (esgotado) e `qtd > estoque` (HTTP 409). `estoque=null` = não gerenciado (sem teto). ✅ Validado por testes 2c e 3.
-**Pendente (baixa pós-pagamento):** `sql/02_baixar_estoque.sql` traz a RPC atômica `baixar_estoque()` (`update ... where estoque >= q`) + o trecho do webhook para chamá-la. **Não apliquei no webhook** para não deixar o código chamando uma função que ainda não existe no banco — aplicar SQL e patch **juntos** (ver H2/§7).
+**Correção 1 (criação do pedido):** rejeita `estoque=0` (esgotado) e `qtd > estoque` (HTTP 409). `estoque=null` = não gerenciado (sem teto). ✅ Validado por testes 2c e 3.
+**Correção 2 (baixa na confirmação):** função `baixar_estoque(p_pedido_id uuid)` criada no banco de produção (`security definer`, `grant execute` só p/ `service_role`) — decrementa `variantes.estoque` lendo `pedidos.itens` (jsonb) com `update ... where estoque >= q` (trata corrida) e guarda contra `qtd<=0`. O `webhook.js` chama a RPC **apenas** quando o PATCH `aguardando→pago` afeta 1 linha (`return=representation&select=id`), evitando baixa dupla em webhook duplicado; falha na baixa é logada sem derrubar o webhook. SQL em `sql/02_baixar_estoque.sql`.
+**A testar em produção:** baixa após pagamento real, idempotência (reenvio do webhook não baixa de novo) e corrida (dois pedidos do último item).
 
 ### 🟠 Altos
 
@@ -136,13 +137,14 @@ Presentes e corretos: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEO
 
 ---
 
-## 6. Pendentes de verificação humana (sem acesso ao banco de produção)
+## 6. Supabase — status (executado com o dono, passo a passo)
 
-> O Supabase conectado a esta sessão só expõe o projeto `mmqfqlbojsbuuodfbilh` (inativo), **não** o de produção `kscqoczfdtoanjdoidtl`. Logo, schema/RLS/Storage **não puderam ser inspecionados** — gerei SQL pronto:
+> O Supabase conectado a esta sessão só expõe o projeto `mmqfqlbojsbuuodfbilh` (inativo), **não** o de produção `kscqoczfdtoanjdoidtl`. Eu gerei os SQL e o dono rodou no SQL Editor de produção.
 
-1. **`sql/03_verificacoes.sql`** — confirma colunas `ativo/destaque/created_at/estoque/preco_promo` em `produtos`/`variantes`, existência dos buckets `produtos` **e** `assets`, e faz dump das policies RLS atuais. Se as colunas/bucket não existirem, catálogo/admin quebram.
-2. **`sql/01_rls_policies.sql`** — RLS correto: `anon`+`authenticated` podem **SELECT** em produtos/variantes; só `authenticated` escreve; `cupons` e `pedidos` fecham para anon. Inclui `notify pgrst, 'reload schema'`. **Ler os avisos H2/H3 antes de aplicar.**
-3. **`sql/02_baixar_estoque.sql`** — RPC atômica de baixa de estoque + patch do webhook (aplicar juntos).
+1. ✅ **`sql/03_verificacoes.sql`** (verificação) — **rodado pelo dono**. Confirmado: `variantes.id` uuid e `variantes.estoque` integer NOT NULL (estoque mora na variante); `pedidos.itens` jsonb; `produtos.id` bigint. Schema saudável, buckets/colunas OK.
+2. ✅ **`sql/02_baixar_estoque.sql`** (baixa de estoque) — função `baixar_estoque(uuid)` **criada em produção** (com `grant execute` p/ `service_role`) e o webhook já chama a RPC. Ver **C2** (resolvido).
+3. ✅ **RLS — INSERT anônimo em `pedidos`** — **dropado pelo dono** (policies `site cria pedido` e `pedidos_insert_anon`) + `reload schema`. (Não foi aplicado o `sql/01` inteiro: por decisão do dono, `produtos`/`variantes`/`cupons` ficaram como estavam — catálogo segue funcionando.)
+4. ⏳ **`cupons` (RLS) e `/api/validar-cupom`** — **adiados** por opção do dono (ver **H3**). `sql/01_rls_policies.sql` segue disponível para quando decidirem fechar cupons.
 
 ---
 
@@ -156,13 +158,17 @@ Presentes e corretos: `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEO
 
 ---
 
-## 8. Commits desta branch
+## 8. Commits desta branch (mais recente em cima)
 
 ```
+fix(webhook): baixa estoque ao confirmar pagamento (1x por pedido)
+docs(sql): finaliza baixar_estoque() p/ tipos de produção
+fix(front): remove textos promocionais que o servidor não cumpre (H1)
+docs(auditoria): relatório + SQL de RLS/estoque/verificações
 fix(carrinho): troca placeholder via.placeholder.com por SVG local
 fix(front): XSS refletido, JSON-LD Product, a11y e SEO
 fix(pagamento): blinda criar-pagamento contra fraude e overselling
 chore(seguranca): adiciona .gitignore (.env*) e remove api/carrinho.js órfão
 ```
 
-Nenhuma mudança foi mesclada em `main`. Merge somente após sua revisão das decisões H1–H5.
+Nenhuma mudança foi mesclada em `main`. Pendências remanescentes: **H3** (cupons), **H4** (CSP), **H5** (apex→www).

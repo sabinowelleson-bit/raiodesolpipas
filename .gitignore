@@ -1,0 +1,16 @@
+# Segredos / ambiente — NUNCA comitar (SUPABASE_SERVICE_ROLE_KEY etc.)
+.env
+.env.*
+!.env.example
+
+# Dependências / build
+node_modules/
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema
+.DS_Store
+Thumbs.db

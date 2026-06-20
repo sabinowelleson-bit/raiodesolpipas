@@ -896,7 +896,7 @@ window.Carrinho = (() => {
       if (it.tamanho) tags.push('<span class="var-tag">' + esc(it.tamanho) + '</span>');
       var variacao = tags.length ? '<div class="cart-item-variation">' + tags.join('') + '</div>' : '';
       var cat = it.categoria ? '<div class="cat">' + esc(it.categoria) + '</div>' : '';
-      var foto = it.foto || 'https://via.placeholder.com/200x200/F0F7FF/8AA0BC?text=Produto';
+      var foto = it.foto || "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='200'%20height='200'%3E%3Crect%20width='200'%20height='200'%20fill='%23F0F7FF'/%3E%3Ctext%20x='100'%20y='104'%20font-family='Arial,sans-serif'%20font-size='14'%20fill='%238AA0BC'%20text-anchor='middle'%3EProduto%3C/text%3E%3C/svg%3E";
       var key = it.produto_id + '|' + (it.variante_id || '');
       return '<article class="cart-item" data-key="' + esc(key) + '">' +
           '<img src="' + esc(foto) + '" alt="' + esc(it.nome) + '" class="cart-item-photo"/>' +

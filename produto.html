@@ -540,7 +540,6 @@ window.Carrinho = (() => {
             variacoesHTML +
             '<div class="produto-preco-bloco">' +
               '<div class="produto-preco" id="preco-display">—</div>' +
-              '<div class="produto-parcela" id="parcela-display"></div>' +
               '<div id="estoque-display"></div>' +
             '</div>' +
             '<div class="qty-wrap">' +
@@ -589,7 +588,6 @@ window.Carrinho = (() => {
 
     function atualizarPrecoEstoque() {
       var precoEl = document.getElementById('preco-display');
-      var parcEl  = document.getElementById('parcela-display');
       var estEl   = document.getElementById('estoque-display');
       var aviso   = document.getElementById('aviso');
       if (aviso) aviso.textContent = '';
@@ -597,7 +595,6 @@ window.Carrinho = (() => {
       if (!varianteEscolhida) {
         precoEl.textContent = 'Selecione uma variação';
         precoEl.style.fontSize = '20px';
-        parcEl.textContent = '';
         estEl.innerHTML = '';
         return;
       }
@@ -609,9 +606,6 @@ window.Carrinho = (() => {
 
       precoEl.style.fontSize = '40px';
       precoEl.textContent = formatarPreco(precoAtual);
-
-      var parcela = precoAtual / 12;
-      parcEl.textContent = 'ou 12x de ' + formatarPreco(parcela) + ' sem juros';
 
       if (estoque > 0) {
         estEl.innerHTML = '<span class="produto-estoque estoque-ok">' + estoque + ' em estoque</span>';

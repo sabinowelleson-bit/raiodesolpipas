@@ -277,7 +277,6 @@ function gerarCardHTML(p) {
   var temVariantes = (p.variantes || []).filter(function(v){ return v.ativo !== false; }).length > 0;
   var precoAtual = precoExibicao(p);
   var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
-  var parcela = precoAtual / 12;
   var foto = p.imagem_url || SEM_FOTO;
 
   return '<article class="product-card">' +
@@ -292,7 +291,6 @@ function gerarCardHTML(p) {
       '<div class="product-price">' +
         '<span class="current">' + formatarPreco(precoAtual) + '</span>' +
         (temPromo ? '<span class="original">' + formatarPreco(p.preco) + '</span>' : '') +
-        '<span class="installment">ou 12x ' + formatarPreco(parcela) + ' sem juros</span>' +
       '</div>' +
       '<a class="product-cta" href="produto.html?id=' + p.id + '" ' +
         'style="text-decoration:none;">' +

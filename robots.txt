@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
 Disallow: /admin_raio_de_sol.html
+Disallow: /carrinho_raio_de_sol.html
+Disallow: /pagamento-concluido.html
 
-Sitemap: https://raiodesolpipas.com.br/sitemap.xml
+Sitemap: https://www.raiodesolpipas.com.br/sitemap.xml

@@ -619,7 +619,7 @@
 
       if (filtrado.length === 0) {
         var nomeCat = categoriaAtiva || 'esta categoria';
-        grid.innerHTML = '<div class="state-message"><strong>Nenhum produto</strong>Ainda não temos produtos em ' + nomeCat + '. Em breve!</div>';
+        grid.innerHTML = '<div class="state-message"><strong>Nenhum produto</strong>Ainda não temos produtos em ' + esc(nomeCat) + '. Em breve!</div>';
         if (countEl) countEl.innerHTML = '';
         return;
       }

@@ -532,7 +532,7 @@ window.Carrinho = (() => {
 
       alvo.innerHTML =
         '<div class="produto-wrap">' +
-          '<div class="produto-media"><img src="' + foto + '" alt="' + esc(produto.nome) + '"/></div>' +
+          '<div class="produto-media"><img src="' + esc(foto) + '" alt="' + esc(produto.nome) + '"/></div>' +
           '<div class="produto-detalhe">' +
             '<span class="produto-cat">' + esc(produto.categoria || 'Produto') + '</span>' +
             '<h1 class="produto-nome">' + esc(produto.nome) + '</h1>' +
@@ -540,15 +540,14 @@ window.Carrinho = (() => {
             variacoesHTML +
             '<div class="produto-preco-bloco">' +
               '<div class="produto-preco" id="preco-display">—</div>' +
-              '<div class="produto-parcela" id="parcela-display"></div>' +
               '<div id="estoque-display"></div>' +
             '</div>' +
             '<div class="qty-wrap">' +
-              '<div class="var-label" style="margin:0">Qtd</div>' +
+              '<label class="var-label" style="margin:0" for="qty-input">Qtd</label>' +
               '<div class="qty-control">' +
-                '<button class="qty-btn" type="button" id="qty-menos">−</button>' +
-                '<input class="qty-input" type="number" id="qty-input" value="1" min="1"/>' +
-                '<button class="qty-btn" type="button" id="qty-mais">+</button>' +
+                '<button class="qty-btn" type="button" id="qty-menos" aria-label="Diminuir quantidade">−</button>' +
+                '<input class="qty-input" type="number" id="qty-input" value="1" min="1" aria-label="Quantidade"/>' +
+                '<button class="qty-btn" type="button" id="qty-mais" aria-label="Aumentar quantidade">+</button>' +
               '</div>' +
             '</div>' +
             '<button class="add-cart-btn" id="btn-add" type="button">Adicionar ao carrinho</button>' +
@@ -589,7 +588,6 @@ window.Carrinho = (() => {
 
     function atualizarPrecoEstoque() {
       var precoEl = document.getElementById('preco-display');
-      var parcEl  = document.getElementById('parcela-display');
       var estEl   = document.getElementById('estoque-display');
       var aviso   = document.getElementById('aviso');
       if (aviso) aviso.textContent = '';
@@ -597,7 +595,6 @@ window.Carrinho = (() => {
       if (!varianteEscolhida) {
         precoEl.textContent = 'Selecione uma variação';
         precoEl.style.fontSize = '20px';
-        parcEl.textContent = '';
         estEl.innerHTML = '';
         return;
       }
@@ -609,9 +606,6 @@ window.Carrinho = (() => {
 
       precoEl.style.fontSize = '40px';
       precoEl.textContent = formatarPreco(precoAtual);
-
-      var parcela = precoAtual / 12;
-      parcEl.textContent = 'ou 12x de ' + formatarPreco(parcela) + ' sem juros';
 
       if (estoque > 0) {
         estEl.innerHTML = '<span class="produto-estoque estoque-ok">' + estoque + ' em estoque</span>';
@@ -755,6 +749,39 @@ window.Carrinho = (() => {
         setMeta('meta[name="twitter:image"]', fotoProd);
         setMeta('meta[property="og:url"]', urlProd);
         var can = document.getElementById('canonical-link'); if (can) can.setAttribute('href', urlProd);
+      })();
+
+      // Structured data (schema.org/Product) p/ rich snippet — injetado após o produto carregar.
+      (function(){
+        var ativas = variantes.filter(function(v){ return v.ativo !== false; });
+        var precos = ativas.length
+          ? ativas.map(function(v){ return Number(v.preco_promo || v.preco) || 0; }).filter(function(n){ return n > 0; })
+          : [Number(produto.preco_promo || produto.preco) || 0].filter(function(n){ return n > 0; });
+        var precoMin = precos.length ? Math.min.apply(null, precos) : 0;
+        var estoque = ativas.length
+          ? ativas.reduce(function(s, v){ return s + (Number(v.estoque) || 0); }, 0)
+          : (produto.estoque != null ? Number(produto.estoque) : null);
+        var disponivel = (estoque == null || estoque > 0);
+        var ld = {
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": produto.nome,
+          "image": (produto.imagem_url || 'https://www.raiodesolpipas.com.br/favicon-512.png'),
+          "description": produto.descricao || produto.nome,
+          "category": produto.categoria || undefined,
+          "url": 'https://www.raiodesolpipas.com.br/produto.html?id=' + encodeURIComponent(produto.id),
+          "offers": {
+            "@type": "Offer",
+            "url": 'https://www.raiodesolpipas.com.br/produto.html?id=' + encodeURIComponent(produto.id),
+            "priceCurrency": "BRL",
+            "price": precoMin.toFixed(2),
+            "availability": disponivel ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+          }
+        };
+        var s = document.createElement('script');
+        s.type = 'application/ld+json';
+        s.textContent = JSON.stringify(ld);
+        document.head.appendChild(s);
       })();
 
       render();

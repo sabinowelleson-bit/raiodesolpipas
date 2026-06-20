@@ -277,13 +277,12 @@ function gerarCardHTML(p) {
   var temVariantes = (p.variantes || []).filter(function(v){ return v.ativo !== false; }).length > 0;
   var precoAtual = precoExibicao(p);
   var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
-  var parcela = precoAtual / 12;
   var foto = p.imagem_url || SEM_FOTO;
 
   return '<article class="product-card">' +
     '<div class="product-media">' +
       (p.badge ? '<div class="product-badges"><span class="pill rank gold">' + esc(p.badge) + '</span></div>' : '') +
-      '<img class="product-photo" src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
+      '<img class="product-photo" src="' + esc(foto) + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="product-info">' +
       '<span class="product-cat">' + esc(p.categoria || 'Produto') + '</span>' +
@@ -292,7 +291,6 @@ function gerarCardHTML(p) {
       '<div class="product-price">' +
         '<span class="current">' + formatarPreco(precoAtual) + '</span>' +
         (temPromo ? '<span class="original">' + formatarPreco(p.preco) + '</span>' : '') +
-        '<span class="installment">ou 12x ' + formatarPreco(parcela) + ' sem juros</span>' +
       '</div>' +
       '<a class="product-cta" href="produto.html?id=' + p.id + '" ' +
         'style="text-decoration:none;">' +
@@ -314,7 +312,7 @@ function gerarCatCardHTML(p) {
 
   return '<article class="cat-card-mini">' +
     '<div class="cat-card-mini-media">' +
-      '<img src="' + foto + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
+      '<img src="' + esc(foto) + '" alt="' + esc(p.nome) + '" loading="lazy"/>' +
     '</div>' +
     '<div class="cat-card-mini-body">' +
       '<span class="cat-card-mini-cat">' + esc(p.categoria || 'Produto') + '</span>' +

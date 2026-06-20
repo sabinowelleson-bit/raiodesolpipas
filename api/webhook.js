@@ -72,10 +72,14 @@ export default async function handler(req, res) {
 
     // 2) Marca como pago — só se ainda estiver "aguardando" (idempotente).
     //    Com a service_role key o RLS é ignorado, então o filtro é só um WHERE.
+    // return=representation + select=id: a resposta traz as linhas REALMENTE
+    // atualizadas. Como o filtro exige status=aguardando, só a 1ª confirmação
+    // muda linha; um webhook duplicado bate 0 linhas e NÃO baixa estoque de novo.
     const url =
       `${SUPABASE_URL}/rest/v1/pedidos` +
       `?pagamento_id=eq.${encodeURIComponent(orderNsu)}` +
-      `&status=eq.aguardando`;
+      `&status=eq.aguardando` +
+      `&select=id`;
 
     const upd = await fetch(url, {
       method: "PATCH",
@@ -83,7 +87,7 @@ export default async function handler(req, res) {
         apikey: serviceKey,
         Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json",
-        Prefer: "return=minimal",
+        Prefer: "return=representation",
       },
       body: JSON.stringify({
         status: "pago",
@@ -97,7 +101,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "update" });
     }
 
-    // Se 0 linhas baterem (pedido já estava pago), tudo bem — segue 200.
+    const linhas = await upd.json().catch(() => []);
+    const pedido = Array.isArray(linhas) ? linhas[0] : null;
+
+    // Só baixa estoque se ESTE webhook fez a transição aguardando->pago (1 linha).
+    // Webhook duplicado => 0 linhas => pula (evita baixar estoque duas vezes).
+    if (pedido && pedido.id) {
+      try {
+        const baixa = await fetch(`${SUPABASE_URL}/rest/v1/rpc/baixar_estoque`, {
+          method: "POST",
+          headers: {
+            apikey: serviceKey,
+            Authorization: `Bearer ${serviceKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ p_pedido_id: pedido.id }),
+        });
+        if (!baixa.ok) {
+          const bt = await baixa.text().catch(() => "");
+          console.error("[webhook] baixa de estoque falhou", baixa.status, bt);
+        }
+      } catch (e) {
+        // O pagamento já está confirmado: NÃO derruba o webhook por falha na baixa.
+        console.error("[webhook] baixa de estoque (exceção)", e);
+      }
+    }
+
+    // 0 linhas (pedido já estava pago) também segue 200 — idempotente.
     console.log("[webhook] pedido confirmado como pago", orderNsu);
     return res.status(200).json({ ok: true });
   } catch (e) {

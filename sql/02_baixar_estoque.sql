@@ -55,6 +55,7 @@ $$;
 
 -- Só a service_role precisa chamar (o webhook usa service_role).
 revoke all on function public.baixar_estoque(uuid) from public, anon, authenticated;
+grant execute on function public.baixar_estoque(uuid) to service_role;
 
 notify pgrst, 'reload schema';
 

@@ -8,6 +8,13 @@
 -- Esta função decrementa com WHERE estoque >= q (trata corrida) item a item,
 -- lendo os itens gravados no próprio pedido. É idempotente por design quando
 -- chamada uma vez na transição aguardando->pago (o webhook só baixa nesse momento).
+--
+-- Tipos confirmados em produção (2026-06-20):
+--   variantes.id     uuid     -> variante_id é cast p/ ::uuid
+--   variantes.estoque integer NOT NULL  -> a baixa acontece aqui
+--   produtos.id      bigint   -> produto_id é cast p/ ::bigint (itens sem variante)
+--   pedidos.id       uuid     -> p_pedido_id uuid
+--   pedidos.itens    jsonb    -> jsonb_array_elements(itens)
 -- ============================================================================
 
 create or replace function public.baixar_estoque(p_pedido_id uuid)
@@ -18,21 +25,29 @@ set search_path = public
 as $$
 declare
   item jsonb;
+  q    int;
 begin
   for item in
     select jsonb_array_elements(itens) from public.pedidos where id = p_pedido_id
   loop
+    q := coalesce((item->>'qtd')::int, 0);
+    if q <= 0 then
+      continue;  -- defesa: ignora qtd inválida (não deixa "aumentar" estoque)
+    end if;
+
     if (item->>'variante_id') is not null then
+      -- Estoque mora na variante (variantes.estoque, integer NOT NULL).
       update public.variantes
-         set estoque = estoque - (item->>'qtd')::int
+         set estoque = estoque - q
        where id = (item->>'variante_id')::uuid
-         and estoque >= (item->>'qtd')::int;
+         and estoque >= q;
     else
+      -- Item sem variante: baixa no produto (se o estoque for gerenciado).
       update public.produtos
-         set estoque = estoque - (item->>'qtd')::int
+         set estoque = estoque - q
        where id = (item->>'produto_id')::bigint
          and estoque is not null
-         and estoque >= (item->>'qtd')::int;
+         and estoque >= q;
     end if;
   end loop;
 end;

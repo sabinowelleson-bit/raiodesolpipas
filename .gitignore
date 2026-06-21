@@ -7,6 +7,9 @@
 node_modules/
 .vercel/
 
+# Ferramentas locais (preview, configs de sessão) — não versionar
+.claude/
+
 # Logs
 *.log
 npm-debug.log*

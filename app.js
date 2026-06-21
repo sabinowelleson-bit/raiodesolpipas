@@ -148,20 +148,36 @@ function initAdmin() {
   // ---------- VERIFICAÇÃO DE SESSÃO ----------
   const loginOverlay = document.getElementById('login-overlay');
   if (loginOverlay) {
-    sb.auth.getSession().then(function({ data }) {
-      if (data && data.session) {
-        loginOverlay.classList.add('hidden');
-        const nameEl = document.querySelector('.sidebar-user .name');
-        if (nameEl && data.session.user) {
-          nameEl.textContent = data.session.user.email.split('@')[0];
-        }
-        // Já logado ao abrir/atualizar a página: carrega os pedidos e KPIs reais.
-        // Sem isto, o painel mostra o conteúdo estático até clicar num item do menu.
-        (function carregaQuandoPronto(tentativas) {
-          if (typeof window.carregarPedidos === 'function') { window.carregarPedidos(); return; }
-          if (tentativas > 0) setTimeout(function() { carregaQuandoPronto(tentativas - 1); }, 150);
-        })(15);
+    // Ativa o painel quando há sessão: esconde o overlay, mostra o nome e
+    // carrega os DADOS REAIS (pedidos/KPIs) uma única vez. Sem o carregamento
+    // automático, o admin fica mostrando o HTML estático/mock até clicar no menu.
+    let painelCarregado = false;
+    function ativarPainel(session) {
+      if (!session) return;
+      loginOverlay.classList.add('hidden');
+      const nameEl = document.querySelector('.sidebar-user .name');
+      if (nameEl && session.user) {
+        nameEl.textContent = session.user.email.split('@')[0];
       }
+      if (painelCarregado) return;            // dados reais: só uma vez por abertura
+      painelCarregado = true;
+      (function carregaQuandoPronto(tentativas) {
+        if (typeof window.carregarPedidos === 'function') { window.carregarPedidos(); return; }
+        if (tentativas > 0) setTimeout(function() { carregaQuandoPronto(tentativas - 1); }, 150);
+      })(20);
+    }
+
+    // 1) Tentativa imediata: sessão já em cache no load/refresh.
+    sb.auth.getSession().then(function({ data }) {
+      if (data && data.session) ativarPainel(data.session);
+    });
+
+    // 2) Rede de segurança: o Supabase emite INITIAL_SESSION quando termina de
+    //    restaurar a sessão no carregamento da página (caso o getSession() acima
+    //    resolva antes disso). O login (SIGNED_IN) continua tratado no script do
+    //    admin, então aqui só reagimos à restauração inicial — sem carga dupla.
+    sb.auth.onAuthStateChange(function(event, session) {
+      if (event === 'INITIAL_SESSION' && session) ativarPainel(session);
     });
   }
   // -------------------------------------------

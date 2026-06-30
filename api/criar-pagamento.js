@@ -8,6 +8,11 @@
 //
 // Variável de ambiente necessária na Vercel:
 //   SUPABASE_SERVICE_ROLE_KEY  (a mesma que o webhook já usa)
+//
+// Frete: o valor é RECONFERIDO no servidor (cota o Melhor Envio pelo CEP+serviço
+// escolhido) — nunca confia no preço de frete vindo do navegador.
+
+import { cotarFrete } from "./_melhorenvio.js";
 
 const SUPABASE_URL = "https://kscqoczfdtoanjdoidtl.supabase.co";
 const HANDLE = "raiodesolpipas";
@@ -62,7 +67,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { itens, frete_tipo, cupom, cliente } = req.body || {};
+    const { itens, frete_tipo, frete, cupom, cliente } = req.body || {};
 
     // 1) Validações básicas
     if (!Array.isArray(itens) || itens.length === 0) {
@@ -71,9 +76,13 @@ export default async function handler(req, res) {
     if (!cliente || !cliente.nome || !cliente.cep || !cliente.end || !cliente.tel) {
       return res.status(400).json({ erro: "Dados de entrega incompletos." });
     }
-    const frete = FRETES[frete_tipo];
-    if (!frete) {
-      return res.status(400).json({ erro: "Opção de frete inválida." });
+    // Tipo do frete (resolvido só DEPOIS de montar os itens, pois o Melhor Envio
+    // precisa dos itens pra cotar). Aceita o objeto novo { tipo, servico_id } e,
+    // por compatibilidade, o frete_tipo antigo ("retirada"/"pac"/"sedex").
+    const freteReq = (frete && typeof frete === "object") ? frete : null;
+    const tipoFrete = (freteReq && freteReq.tipo) || frete_tipo;
+    if (!tipoFrete) {
+      return res.status(400).json({ erro: "Selecione uma opção de frete." });
     }
 
     // 2) Busca preços REAIS no Supabase
@@ -156,7 +165,38 @@ export default async function handler(req, res) {
       });
     }
     subtotal = Math.round(subtotal * 100) / 100;
-    const freteVal = frete.valor;
+
+    // Resolve o FRETE no servidor (autoritativo). Nunca usa preço vindo do cliente.
+    let freteVal, freteLabel;
+    if (tipoFrete === "retirada") {
+      freteVal = 0;
+      freteLabel = "Retirar na loja";
+    } else if (tipoFrete === "melhorenvio") {
+      const servicoId = freteReq && freteReq.servico_id;
+      if (servicoId == null) {
+        return res.status(400).json({ erro: "Selecione uma opção de frete." });
+      }
+      // RECONFERE a cotação pelo CEP do cliente + itens reais e usa ESSE valor.
+      let opcoes;
+      try {
+        opcoes = await cotarFrete(serviceKey, cliente.cep, itensFinais);
+      } catch (e) {
+        console.error("[criar-pagamento] falha ao cotar frete", e);
+        return res.status(502).json({ erro: "Não foi possível confirmar o frete. Tente novamente." });
+      }
+      const escolhida = opcoes.find((o) => String(o.servico_id) === String(servicoId));
+      if (!escolhida) {
+        return res.status(400).json({ erro: "A opção de frete escolhida não está mais disponível para este CEP." });
+      }
+      freteVal = escolhida.preco;
+      freteLabel = [escolhida.transportadora, escolhida.servico].filter(Boolean).join(" ") || "Frete";
+    } else if (FRETES[tipoFrete]) {
+      // compatibilidade com fretes fixos antigos
+      freteVal = FRETES[tipoFrete].valor;
+      freteLabel = FRETES[tipoFrete].label;
+    } else {
+      return res.status(400).json({ erro: "Opção de frete inválida." });
+    }
 
     // 4) Valida o cupom NO SERVIDOR e calcula o desconto
     let desconto = 0;
@@ -211,7 +251,7 @@ export default async function handler(req, res) {
         itens: itensFinais,
         subtotal, frete: freteVal, desconto, total,
         status: "aguardando",
-        frete_tipo: frete.label,
+        frete_tipo: freteLabel,
         pagamento_id: ref,
       }),
     });
@@ -237,7 +277,7 @@ export default async function handler(req, res) {
         return { quantity: it.qtd, price: Math.round(it.preco * 100), description: desc };
       });
       if (freteVal > 0) {
-        itemsPay.push({ quantity: 1, price: Math.round(freteVal * 100), description: "Frete (" + frete.label + ")" });
+        itemsPay.push({ quantity: 1, price: Math.round(freteVal * 100), description: "Frete (" + freteLabel + ")" });
       }
     }
 

@@ -578,22 +578,14 @@
       <!-- Frete -->
       <div class="freight-section">
         <div class="section-label">Frete</div>
-        <div class="freight-options">
-          <label class="freight-opt selected" data-frete="pac">
-            <div class="freight-opt-info">
-              <div class="name">PAC · Correios</div>
-              <div class="time">6 a 10 dias úteis</div>
-            </div>
-            <div class="freight-opt-price">R$ 18,90</div>
-          </label>
-          <label class="freight-opt" data-frete="sedex">
-            <div class="freight-opt-info">
-              <div class="name">SEDEX · Correios</div>
-              <div class="time">2 a 4 dias úteis</div>
-            </div>
-            <div class="freight-opt-price">R$ 32,50</div>
-          </label>
-          <label class="freight-opt" data-frete="retirada">
+        <div class="input-group">
+          <input type="text" id="frete-cep" placeholder="CEP de entrega" maxlength="9" inputmode="numeric" autocomplete="postal-code"/>
+          <button class="input-btn" type="button" id="frete-calcular">Calcular</button>
+        </div>
+        <div id="frete-status" style="font-size:13px;margin-top:8px;min-height:16px;color:var(--text-muted)"></div>
+        <div class="freight-options" id="freight-options">
+          <!-- opções do Melhor Envio são inseridas aqui após calcular -->
+          <label class="freight-opt" data-frete="retirada" data-servico="" data-preco="0">
             <div class="freight-opt-info">
               <div class="name">Retirar na loja</div>
               <div class="time">Av. Graciliano Ramos, Planalto</div>
@@ -873,17 +865,93 @@ window.Carrinho = (() => {
 
     var cupomAplicado = null; // cupom validado e aplicado no carrinho
 
-    // ---- FRETE (placeholder até integrar Correios na Etapa de checkout) ----
+    // ---- FRETE (cotação via Melhor Envio + retirada na loja) ----
+    // Retorna a opção escolhida ou null se nada foi selecionado ainda.
     function freteSelecionado(){
       var opt = document.querySelector('.freight-opt.selected');
-      if (!opt) return { valor: 0, label: '—' };
-      var precoEl = opt.querySelector('.freight-opt-price');
-      var nomeEl  = opt.querySelector('.freight-opt-info .name');
-      var txt = precoEl ? precoEl.textContent.trim() : '';
-      var valor = /gr[áa]tis/i.test(txt) ? 0 : (parseFloat(txt.replace(/[^\d,]/g, '').replace(',', '.')) || 0);
-      var label = nomeEl ? nomeEl.textContent.split('·')[0].trim() : '';
-      var tipo = opt.getAttribute('data-frete') || 'retirada';
-      return { valor: valor, label: label, tipo: tipo };
+      if (!opt) return null;
+      var nomeEl = opt.querySelector('.freight-opt-info .name');
+      return {
+        tipo: opt.getAttribute('data-frete') || 'retirada',
+        servico_id: opt.getAttribute('data-servico') || null,
+        valor: parseFloat(opt.getAttribute('data-preco')) || 0,
+        label: nomeEl ? nomeEl.textContent.trim() : ''
+      };
+    }
+
+    function freteStatus(msg, cor){
+      var el = document.getElementById('frete-status');
+      if (el){ el.textContent = msg || ''; el.style.color = cor || 'var(--text-muted)'; }
+    }
+
+    // Remove as opções do Melhor Envio (mantém "Retirar na loja").
+    function limparOpcoesFrete(){
+      var box = document.getElementById('freight-options');
+      if (!box) return false;
+      var me = box.querySelectorAll('.freight-opt[data-frete="melhorenvio"]');
+      me.forEach(function(o){ o.remove(); });
+      return me.length > 0;
+    }
+
+    function renderOpcoesFrete(opcoes){
+      var box = document.getElementById('freight-options');
+      if (!box) return;
+      limparOpcoesFrete();
+      box.querySelectorAll('.freight-opt').forEach(function(o){ o.classList.remove('selected'); });
+      var retirada = box.querySelector('.freight-opt[data-frete="retirada"]');
+      opcoes.forEach(function(op){
+        var prazo = op.prazo ? (op.prazo + (op.prazo === 1 ? ' dia útil' : ' dias úteis')) : '';
+        var nome = (op.transportadora ? op.transportadora + ' · ' : '') + (op.servico || 'Frete');
+        var el = document.createElement('label');
+        el.className = 'freight-opt';
+        el.setAttribute('data-frete', 'melhorenvio');
+        el.setAttribute('data-servico', op.servico_id);
+        el.setAttribute('data-preco', op.preco);
+        el.innerHTML =
+          '<div class="freight-opt-info"><div class="name">' + esc(nome) + '</div>' +
+          (prazo ? '<div class="time">' + esc(prazo) + '</div>' : '') + '</div>' +
+          '<div class="freight-opt-price">' + brl(op.preco) + '</div>';
+        box.insertBefore(el, retirada);
+      });
+      atualizarTotais();
+    }
+
+    async function calcularFrete(){
+      var cepEl = document.getElementById('frete-cep');
+      var cep = cepEl ? cepEl.value.replace(/\D/g, '') : '';
+      if (cep.length !== 8){ freteStatus('Digite um CEP válido (8 dígitos).', '#DC2626'); return; }
+      if (Carrinho.vazio()){ freteStatus('Adicione itens ao carrinho primeiro.', '#DC2626'); return; }
+      // Mantém o CEP da entrega em sincronia com o que foi cotado.
+      var dfCep = document.getElementById('df-cep');
+      if (dfCep) dfCep.value = cepEl ? cepEl.value : cep;
+
+      var btn = document.getElementById('frete-calcular');
+      var txt = btn ? btn.textContent : '';
+      if (btn){ btn.disabled = true; btn.textContent = '...'; }
+      freteStatus('Calculando frete...');
+      try {
+        var itens = Carrinho.ler().map(function(it){
+          return { produto_id: it.produto_id, variante_id: it.variante_id || null, qtd: Number(it.qtd) || 1 };
+        });
+        var resp = await fetch('/api/calcular-frete', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cep: cep, itens: itens })
+        });
+        var data = await resp.json().catch(function(){ return {}; });
+        if (!resp.ok){
+          freteStatus((data && data.erro) ? data.erro : 'Não foi possível calcular o frete.', '#DC2626');
+          return;
+        }
+        var opcoes = data.opcoes || [];
+        renderOpcoesFrete(opcoes);
+        if (!opcoes.length) freteStatus(data.aviso || 'Sem opções para este CEP — você pode retirar na loja.', '#DC2626');
+        else freteStatus('Escolha uma opção de frete.', 'var(--text-muted)');
+      } catch (e){
+        console.error('Erro calcular-frete:', e);
+        freteStatus('Falha ao calcular o frete. Tente de novo.', '#DC2626');
+      } finally {
+        if (btn){ btn.disabled = false; btn.textContent = txt; }
+      }
     }
 
     // ---- RENDER DE UM ITEM ----
@@ -935,6 +1003,8 @@ window.Carrinho = (() => {
         if (form) form.style.display = '';
       }
       ligarEventosItens();
+      // Itens mudaram → o preço do frete pode mudar; descarta a cotação anterior.
+      if (limparOpcoesFrete()) freteStatus('Itens alterados — recalcule o frete.', 'var(--text-muted)');
       atualizarTotais();
       atualizarBadges();
     }
@@ -955,15 +1025,15 @@ window.Carrinho = (() => {
       var n = Carrinho.totalItens();
       var subtotal = Carrinho.subtotal();
       var frete = freteSelecionado();
-      var freteVal = n > 0 ? frete.valor : 0;
+      var freteVal = (n > 0 && frete) ? frete.valor : 0;
       var desconto = n > 0 ? calcularDesconto(subtotal, freteVal) : 0;
       var total = subtotal + freteVal - desconto;
       if (total < 0) total = 0;
 
       setText('sum-label', 'Subtotal (' + n + (n === 1 ? ' item' : ' itens') + ')');
       setText('sum-subtotal', brl(subtotal));
-      setText('sum-frete-label', n > 0 ? ('Frete · ' + (frete.label || '—')) : 'Frete');
-      setText('sum-frete', n > 0 ? brl(freteVal) : '—');
+      setText('sum-frete-label', (n > 0 && frete && frete.label) ? ('Frete · ' + frete.label) : 'Frete');
+      setText('sum-frete', (n > 0 && frete) ? brl(freteVal) : '—');
       var descRow = document.getElementById('desconto-row');
       if (descRow){
         if (desconto > 0){
@@ -996,15 +1066,22 @@ window.Carrinho = (() => {
       }
     }
 
-    // ---- SELEÇÃO DE FRETE ----
+    // ---- SELEÇÃO DE FRETE (delegação: cobre as opções criadas dinamicamente) ----
     function ligarFrete(){
-      document.querySelectorAll('.freight-opt').forEach(function(opt){
-        opt.addEventListener('click', function(){
-          document.querySelectorAll('.freight-opt').forEach(function(o){ o.classList.remove('selected'); });
-          opt.classList.add('selected');
-          atualizarTotais();
-        });
+      var box = document.getElementById('freight-options');
+      if (!box || box._ligado) return;
+      box._ligado = true;
+      box.addEventListener('click', function(e){
+        var opt = e.target.closest('.freight-opt');
+        if (!opt) return;
+        box.querySelectorAll('.freight-opt').forEach(function(o){ o.classList.remove('selected'); });
+        opt.classList.add('selected');
+        atualizarTotais();
       });
+      var btn = document.getElementById('frete-calcular');
+      if (btn) btn.addEventListener('click', calcularFrete);
+      var cepEl = document.getElementById('frete-cep');
+      if (cepEl) cepEl.addEventListener('keydown', function(e){ if (e.key === 'Enter'){ e.preventDefault(); calcularFrete(); } });
     }
 
     // ---- CUPOM DE DESCONTO ----
@@ -1145,6 +1222,12 @@ window.Carrinho = (() => {
 
         var itens = Carrinho.ler();
         var frete = freteSelecionado();
+        if (!frete){
+          freteStatus('Escolha uma opção de frete (calcule pelo seu CEP ou selecione "Retirar na loja").', '#DC2626');
+          var fsec = document.querySelector('.freight-section');
+          if (fsec) fsec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          return;
+        }
         var subtotal = Carrinho.subtotal();
         var freteVal = frete.valor || 0;
         var desconto = calcularDesconto(subtotal, freteVal);
@@ -1187,7 +1270,7 @@ window.Carrinho = (() => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               itens: itensPayload,
-              frete_tipo: frete.tipo,
+              frete: { tipo: frete.tipo, servico_id: frete.servico_id },
               cupom: cupomCodigo,
               cliente: { nome: dados.nome, email: dados.email || null, tel: dados.tel, cep: dados.cep, end: dados.end }
             })

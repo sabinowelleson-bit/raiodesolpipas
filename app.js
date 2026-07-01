@@ -303,7 +303,7 @@ function gerarCardHTML(p) {
     '<div class="product-info">' +
       '<span class="product-cat">' + esc(p.categoria || 'Produto') + '</span>' +
       '<h3 class="product-name">' + esc(p.nome) + '</h3>' +
-      '<span class="product-stock">' + (p.estoque > 0 ? p.estoque + ' unidades' : 'Sob consulta') + '</span>' +
+      '<span class="product-stock">' + (estoqueTotal(p) > 0 ? estoqueTotal(p) + ' unidades' : 'Sob consulta') + '</span>' +
       '<div class="product-price">' +
         '<span class="current">' + formatarPreco(precoAtual) + '</span>' +
         (temPromo ? '<span class="original">' + formatarPreco(p.preco) + '</span>' : '') +

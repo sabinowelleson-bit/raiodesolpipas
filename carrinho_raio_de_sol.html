@@ -1187,20 +1187,6 @@ window.Carrinho = (() => {
       if (!d.end || d.end.length < 8) return 'Preencha o endereço completo de entrega.';
       return null;
     }
-    function itensParaPagamento(itens, frete){
-      var lista = itens.map(function(it){
-        var nome = it.nome;
-        var extra = [];
-        if (it.cor) extra.push(it.cor);
-        if (it.tamanho) extra.push(it.tamanho);
-        if (extra.length) nome += ' (' + extra.join(' \u00b7 ') + ')';
-        return { descricao: nome, quantidade: Number(it.qtd) || 1, preco: Number(it.preco) || 0 };
-      });
-      if (frete && frete.valor > 0){
-        lista.push({ descricao: 'Frete (' + (frete.label || 'Entrega') + ')', quantidade: 1, preco: frete.valor });
-      }
-      return lista;
-    }
 
     function ligarFinalizar(){
       var btn = document.querySelector('.checkout-btn');
@@ -1239,7 +1225,6 @@ window.Carrinho = (() => {
           if (formZero) formZero.scrollIntoView({ behavior: 'smooth', block: 'center' });
           return;
         }
-        var ref = 'RS-' + Date.now().toString(36).toUpperCase(); // referência do pedido (texto) p/ casar com o pagamento
 
         function setBtn(txt, busy){
           btn.innerHTML = txt;

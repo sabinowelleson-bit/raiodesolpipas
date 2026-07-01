@@ -363,17 +363,18 @@ window.Carrinho = (() => {
     }
 
     const itens   = ler();
-    const estoque = Number(novo.estoque) || 0;
+    // Estoque: null = não controla (sem teto); 0 = esgotado; >0 = teto nesse número.
+    const estoque = (novo.estoque == null || isNaN(Number(novo.estoque))) ? null : Number(novo.estoque);
     const qtdAdd  = Math.max(1, Number(novo.qtd) || 1);
     const existente = itens.find(i => mesmaIdentidade(i, novo.produto_id, novo.variante_id));
 
     if (existente) {
       let novaQtd = existente.qtd + qtdAdd;
-      if (estoque > 0) novaQtd = Math.min(novaQtd, estoque);
+      if (estoque != null) novaQtd = Math.min(novaQtd, estoque);
       existente.qtd = novaQtd;
       // mantém preço/estoque sempre atualizados com o último valor enviado
       existente.preco   = Number(novo.preco) || existente.preco;
-      existente.estoque = estoque || existente.estoque;
+      existente.estoque = estoque;
     } else {
       itens.push({
         produto_id:  novo.produto_id,
@@ -383,7 +384,7 @@ window.Carrinho = (() => {
         cor:         novo.cor || '',
         tamanho:     novo.tamanho || '',
         preco:       Number(novo.preco) || 0,
-        qtd:         estoque > 0 ? Math.min(qtdAdd, estoque) : qtdAdd,
+        qtd:         estoque != null ? Math.min(qtdAdd, estoque) : qtdAdd,
         foto:        novo.foto || '',
         estoque:     estoque
       });
@@ -402,7 +403,7 @@ window.Carrinho = (() => {
     if (!novaQtd || novaQtd <= 0) {
       return remover(produto_id, variante_id);
     }
-    if (item.estoque > 0) novaQtd = Math.min(novaQtd, item.estoque);
+    if (item.estoque != null) novaQtd = Math.min(novaQtd, item.estoque);
     item.qtd = novaQtd;
 
     salvar(itens);
@@ -497,6 +498,12 @@ window.Carrinho = (() => {
       if (v.tamanho) partes.push(v.tamanho);
       return partes.join(' · ') || 'Padrão';
     }
+    // Semântica de estoque: null = não controla (vende sem teto); 0 = esgotado; >0 = teto.
+    // Nunca use Number(x)||0 (transforma null em 0). Aqui é explícito.
+    function estoqueDe(v){
+      var e = v ? v.estoque : null;
+      return (e == null || isNaN(Number(e))) ? null : Number(e);
+    }
 
     // Lê o ?id= da URL
     function getIdDaUrl() {
@@ -520,7 +527,7 @@ window.Carrinho = (() => {
             '<div class="var-label">Escolha a variação</div>' +
             '<div class="var-opcoes" id="var-opcoes">' +
               variantes.map(function(v, i) {
-                var esgotada = (Number(v.estoque) || 0) <= 0;
+                var esgotada = estoqueDe(v) === 0;   // só 0 esgota; null = disponível
                 return '<button class="var-opcao' + (esgotada ? ' esgotada' : '') + '" ' +
                   'data-idx="' + i + '"' + (esgotada ? ' disabled' : '') + '>' +
                   esc(rotuloVariante(v)) +
@@ -602,27 +609,34 @@ window.Carrinho = (() => {
       var v = varianteEscolhida;
       var temPromo = v.preco_promo && v.preco_promo < v.preco;
       var precoAtual = temPromo ? v.preco_promo : v.preco;
-      var estoque = Number(v.estoque) || 0;
+      var estoque = estoqueDe(v);   // null = não controla; 0 = esgotado; >0 = teto
 
       precoEl.style.fontSize = '40px';
       precoEl.textContent = formatarPreco(precoAtual);
 
-      if (estoque > 0) {
+      if (estoque === 0) {
+        estEl.innerHTML = '<span class="produto-estoque estoque-out">Esgotado</span>';
+      } else if (estoque > 0) {
         estEl.innerHTML = '<span class="produto-estoque estoque-ok">' + estoque + ' em estoque</span>';
       } else {
-        estEl.innerHTML = '<span class="produto-estoque estoque-out">Esgotado</span>';
+        // null = não controla → disponível, sem número
+        estEl.innerHTML = '<span class="produto-estoque estoque-ok">Disponível</span>';
       }
 
-      // Ajusta o máximo da quantidade ao estoque
+      // Teto da quantidade só quando o estoque é controlado (>0). null/0 → sem teto.
       var qtyInput = document.getElementById('qty-input');
       if (qtyInput) {
-        qtyInput.max = estoque;
-        if (parseInt(qtyInput.value) > estoque) qtyInput.value = Math.max(1, estoque);
+        if (estoque > 0) {
+          qtyInput.max = estoque;
+          if (parseInt(qtyInput.value) > estoque) qtyInput.value = Math.max(1, estoque);
+        } else {
+          qtyInput.removeAttribute('max');
+        }
       }
 
-      // Botão habilitado só se há estoque
+      // Só bloqueia se ESGOTADO (===0). null (não controla) e >0 podem comprar.
       var btn = document.getElementById('btn-add');
-      btn.disabled = estoque <= 0;
+      btn.disabled = (estoque === 0);
     }
 
     function ajustarQty(delta) {
@@ -653,8 +667,8 @@ window.Carrinho = (() => {
       }
       if (!varianteEscolhida) return;
 
-      var estoque = Number(varianteEscolhida.estoque) || 0;
-      if (estoque <= 0) {
+      var estoque = estoqueDe(varianteEscolhida);   // null = não controla; 0 = esgotado
+      if (estoque === 0) {
         aviso.style.color = 'var(--accent-3)';
         aviso.textContent = 'Produto esgotado.';
         return;

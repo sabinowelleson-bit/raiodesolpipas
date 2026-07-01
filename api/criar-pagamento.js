@@ -147,9 +147,9 @@ export default async function handler(req, res) {
         estoque = (p.estoque != null) ? Number(p.estoque) : null;
       }
 
-      // Controle de estoque (anti-overselling). estoque=0 => esgotado.
+      // Controle de estoque (anti-overselling). null=não controla (pula); 0=esgotado; >0=teto.
       if (estoque != null) {
-        if (estoque <= 0) {
+        if (estoque === 0) {
           return res.status(409).json({ erro: '"' + nome + '" está esgotado.' });
         }
         if (qtd > estoque) {

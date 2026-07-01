@@ -70,6 +70,47 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "nao confirmado" });
     }
 
+    // 1.5) CONFERE O VALOR: a fatura (data.amount, em centavos) tem que bater com o
+    //      total do pedido (com frete, pós-cupom). NÃO usa data.paid_amount, que pode
+    //      ser MAIOR por juros de parcelamento. Tolerância de 1 centavo.
+    let pedidoTotalCent = null;
+    try {
+      const gp = await fetch(
+        `${SUPABASE_URL}/rest/v1/pedidos` +
+        `?pagamento_id=eq.${encodeURIComponent(orderNsu)}` +
+        `&select=total&limit=1`,
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` } }
+      );
+      if (!gp.ok) {
+        const t = await gp.text().catch(() => "");
+        console.error("[webhook] falha ao buscar total do pedido", gp.status, t);
+        return res.status(400).json({ error: "lookup" }); // transitório -> InfinitePay reenvia
+      }
+      const linhas = await gp.json().catch(() => []);
+      const ped = Array.isArray(linhas) ? linhas[0] : null;
+      if (ped && ped.total != null) pedidoTotalCent = Math.round(Number(ped.total) * 100);
+    } catch (e) {
+      console.error("[webhook] erro ao buscar total do pedido", e);
+      return res.status(400).json({ error: "lookup" }); // transitório -> reenvia
+    }
+
+    const valorFaturaCent = Number(data.amount);
+    if (
+      pedidoTotalCent == null ||
+      !Number.isFinite(valorFaturaCent) ||
+      Math.abs(valorFaturaCent - pedidoTotalCent) > 1
+    ) {
+      // Não bate -> NÃO transiciona. 200 pra InfinitePay não reenviar; o pedido fica
+      // "aguardando" pra conferência manual pelo log.
+      console.error("[webhook] valor da fatura DIVERGE do total do pedido — mantém aguardando", {
+        orderNsu,
+        amount_fatura_centavos: valorFaturaCent,
+        total_pedido_centavos: pedidoTotalCent,
+        paid_amount_centavos: data && data.paid_amount,
+      });
+      return res.status(200).json({ ok: false, motivo: "valor_diverge" });
+    }
+
     // 2) Marca como pago — só se ainda estiver "aguardando" (idempotente).
     //    Com a service_role key o RLS é ignorado, então o filtro é só um WHERE.
     // return=representation + select=id: a resposta traz as linhas REALMENTE

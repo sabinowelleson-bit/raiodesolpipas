@@ -186,9 +186,16 @@ export default async function handler(req, res) {
       }
       const escolhida = opcoes.find((o) => String(o.servico_id) === String(servicoId));
       if (!escolhida) {
+        console.error("[criar-pagamento] serviço de frete não encontrado na reconferência", { servicoId, cep: cliente.cep, opcoes: opcoes.map((o) => o.servico_id) });
         return res.status(400).json({ erro: "A opção de frete escolhida não está mais disponível para este CEP." });
       }
       freteVal = escolhida.preco;
+      // Frete não-retirada TEM que ser um número finito e > 0. Se a reconferência
+      // trouxe valor nulo/zerado/NaN, FALHA explícito — nunca cobra sem frete/R$ 0.
+      if (!Number.isFinite(freteVal) || freteVal <= 0) {
+        console.error("[criar-pagamento] frete reconferido inválido — não cobra", { servicoId, freteVal });
+        return res.status(502).json({ erro: "Não foi possível confirmar o frete. Tente novamente." });
+      }
       freteLabel = [escolhida.transportadora, escolhida.servico].filter(Boolean).join(" ") || "Frete";
     } else if (FRETES[tipoFrete]) {
       // compatibilidade com fretes fixos antigos

@@ -650,6 +650,13 @@
         if (pageTitle) pageTitle.textContent = 'Catálogo — Raio de Sol Pipas';
       }
 
+      // Canonical + og:url refletindo a categoria (mesmo padrão do produto.html:750-751)
+      var urlCat = 'https://www.raiodesolpipas.com.br/catalogo.html' + (cat ? ('?cat=' + encodeURIComponent(cat)) : '');
+      var canon = document.querySelector('link[rel="canonical"]');
+      if (canon) canon.setAttribute('href', urlCat);
+      var ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', urlCat);
+
       // Highlight nav link
       var navMap = { 'Pipas': 'nav-pipas', 'Linhas': 'nav-linhas', 'Carretilhas': 'nav-carretilhas', 'Rabiolas': 'nav-rabiolas', 'Raias': 'nav-raias', 'Kits': 'nav-kits' };
       Object.values(navMap).forEach(function(id) {

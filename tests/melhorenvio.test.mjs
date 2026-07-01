@@ -23,6 +23,7 @@ let savedAuth = null;     // último upsert
 let pedidoGravado = null; // último pedido
 let tokenCalls = [];      // bodies enviados ao /oauth/token
 let calcCalls = [];       // bodies enviados ao /calculate
+let calcOverride = null;  // força a resposta do /calculate ('THROW' | array | null=padrão)
 
 const PRODUTOS = [{ id: 1, nome: "Pipa Azul", preco: 100, preco_promo: null, estoque: 5, ativo: true }];
 
@@ -44,7 +45,11 @@ global.fetch = async (url, opts = {}) => {
   const ok = (json, status = 200) => ({ ok: status < 400, status, json: async () => json, text: async () => JSON.stringify(json) });
 
   if (url.endsWith("/oauth/token")) { tokenCalls.push(JSON.parse(opts.body)); return ok({ access_token: "AT-" + JSON.parse(opts.body).grant_type, refresh_token: "RT-new", expires_in: 60 * 60 * 24 * 30 }); }
-  if (url.includes("/api/v2/me/shipment/calculate")) { calcCalls.push(JSON.parse(opts.body)); return ok(CALC_RESPONSE()); }
+  if (url.includes("/api/v2/me/shipment/calculate")) {
+    calcCalls.push(JSON.parse(opts.body));
+    if (calcOverride === "THROW") throw new Error("Melhor Envio fora/timeout (simulado)");
+    return ok(Array.isArray(calcOverride) ? calcOverride : CALC_RESPONSE());
+  }
   if (url.includes("/rest/v1/melhorenvio_auth") && method === "GET") return ok(authRow ? [authRow] : []);
   if (url.includes("/rest/v1/melhorenvio_auth") && method === "POST") { savedAuth = JSON.parse(opts.body); return ok({}, 201); }
   if (url.includes("/rest/v1/produtos") && method === "GET") { const ids = parseInList(url).map((n) => parseInt(n, 10)); return ok(PRODUTOS.filter((p) => ids.includes(p.id))); }
@@ -132,6 +137,42 @@ const run = async () => {
       cliente,
     } }, res);
     check("7. retirada -> frete 0", res._status === 200 && pedidoGravado.frete === 0 && pedidoGravado.frete_tipo === "Retirar na loja", pedidoGravado && { f: pedidoGravado.frete, t: pedidoGravado.frete_tipo });
+  }
+
+  // --- FALHAS na reconferência do frete: NUNCA cobra (nem produto sem frete, nem R$0) ---
+  // 7.1) Melhor Envio fora/timeout -> 502, sem gravar pedido
+  {
+    calcOverride = "THROW"; pedidoGravado = null;
+    const res = mockRes();
+    await criarPagamento({ method: "POST", headers: {}, body: {
+      itens: [{ produto_id: 1, qtd: 1 }], frete: { tipo: "melhorenvio", servico_id: 1 }, cliente,
+    } }, res);
+    check("7.1 ME fora/timeout -> 502 e NÃO grava pedido", res._status === 502 && pedidoGravado === null, { status: res._status, pedido: pedidoGravado });
+    calcOverride = null;
+  }
+
+  // 7.2) Serviço reconferido com preço 0 -> 502, sem cobrar (não deixa frete R$0)
+  {
+    calcOverride = [{ id: 7, name: "Grátis?", price: "0.00", custom_price: "0.00", delivery_time: 5, company: { id: 9, name: "X" } }];
+    pedidoGravado = null;
+    const res = mockRes();
+    await criarPagamento({ method: "POST", headers: {}, body: {
+      itens: [{ produto_id: 1, qtd: 1 }], frete: { tipo: "melhorenvio", servico_id: 7 }, cliente,
+    } }, res);
+    check("7.2 frete reconferido R$0 -> 502 e NÃO grava pedido", res._status === 502 && pedidoGravado === null, { status: res._status, pedido: pedidoGravado });
+    calcOverride = null;
+  }
+
+  // 7.3) Serviço reconferido com preço não-numérico (NaN) -> 502, sem cobrar
+  {
+    calcOverride = [{ id: 8, name: "Bug", price: "abc", custom_price: "abc", delivery_time: 5, company: { id: 9, name: "X" } }];
+    pedidoGravado = null;
+    const res = mockRes();
+    await criarPagamento({ method: "POST", headers: {}, body: {
+      itens: [{ produto_id: 1, qtd: 1 }], frete: { tipo: "melhorenvio", servico_id: 8 }, cliente,
+    } }, res);
+    check("7.3 frete reconferido NaN -> 502 e NÃO grava pedido", res._status === 502 && pedidoGravado === null, { status: res._status, pedido: pedidoGravado });
+    calcOverride = null;
   }
 
   // 8) OAuth: troca de código por token (callback inicial)

@@ -741,17 +741,18 @@ window.Carrinho = (() => {
     }
 
     const itens   = ler();
-    const estoque = Number(novo.estoque) || 0;
+    // Estoque: null = não controla (sem teto); 0 = esgotado; >0 = teto nesse número.
+    const estoque = (novo.estoque == null || isNaN(Number(novo.estoque))) ? null : Number(novo.estoque);
     const qtdAdd  = Math.max(1, Number(novo.qtd) || 1);
     const existente = itens.find(i => mesmaIdentidade(i, novo.produto_id, novo.variante_id));
 
     if (existente) {
       let novaQtd = existente.qtd + qtdAdd;
-      if (estoque > 0) novaQtd = Math.min(novaQtd, estoque);
+      if (estoque != null) novaQtd = Math.min(novaQtd, estoque);
       existente.qtd = novaQtd;
       // mantém preço/estoque sempre atualizados com o último valor enviado
       existente.preco   = Number(novo.preco) || existente.preco;
-      existente.estoque = estoque || existente.estoque;
+      existente.estoque = estoque;
     } else {
       itens.push({
         produto_id:  novo.produto_id,
@@ -761,7 +762,7 @@ window.Carrinho = (() => {
         cor:         novo.cor || '',
         tamanho:     novo.tamanho || '',
         preco:       Number(novo.preco) || 0,
-        qtd:         estoque > 0 ? Math.min(qtdAdd, estoque) : qtdAdd,
+        qtd:         estoque != null ? Math.min(qtdAdd, estoque) : qtdAdd,
         foto:        novo.foto || '',
         estoque:     estoque
       });
@@ -780,7 +781,7 @@ window.Carrinho = (() => {
     if (!novaQtd || novaQtd <= 0) {
       return remover(produto_id, variante_id);
     }
-    if (item.estoque > 0) novaQtd = Math.min(novaQtd, item.estoque);
+    if (item.estoque != null) novaQtd = Math.min(novaQtd, item.estoque);
     item.qtd = novaQtd;
 
     salvar(itens);

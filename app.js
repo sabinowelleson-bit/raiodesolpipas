@@ -77,7 +77,15 @@ function precoExibicao(p) {
 function estoqueTotal(p) {
   const vars = (p.variantes || []).filter(function (v) { return v.ativo !== false; });
   if (vars.length > 0) {
-    return vars.reduce(function (soma, v) { return soma + (Number(v.estoque) || 0); }, 0);
+    // Semântica null/0/>0 por variante (nunca Number(x)||0, que colapsa null→0):
+    // se QUALQUER variante ativa não controla (estoque==null) => produto não controla (null).
+    // Senão soma os números (0 => "Esgotado"; >0 => a soma).
+    let soma = 0;
+    for (const v of vars) {
+      if (v.estoque == null) return null;
+      soma += Number(v.estoque) || 0;
+    }
+    return soma;
   }
   return p.estoque != null ? p.estoque : null;
 }
@@ -294,6 +302,9 @@ function gerarCardHTML(p) {
   var precoAtual = precoExibicao(p);
   var temPromo = !temVariantes && p.preco_promo && p.preco_promo < p.preco;
   var foto = p.imagem_url || SEM_FOTO;
+  // Estoque: null = não controla ("Sob consulta"); 0 = "Esgotado"; >0 = "N unidades".
+  var est = estoqueTotal(p);
+  var estTxt = (est == null) ? 'Sob consulta' : (est === 0 ? 'Esgotado' : est + ' unidades');
 
   return '<article class="product-card">' +
     '<div class="product-media">' +
@@ -303,7 +314,7 @@ function gerarCardHTML(p) {
     '<div class="product-info">' +
       '<span class="product-cat">' + esc(p.categoria || 'Produto') + '</span>' +
       '<h3 class="product-name">' + esc(p.nome) + '</h3>' +
-      '<span class="product-stock">' + (estoqueTotal(p) > 0 ? estoqueTotal(p) + ' unidades' : 'Sob consulta') + '</span>' +
+      '<span class="product-stock">' + estTxt + '</span>' +
       '<div class="product-price">' +
         '<span class="current">' + formatarPreco(precoAtual) + '</span>' +
         (temPromo ? '<span class="original">' + formatarPreco(p.preco) + '</span>' : '') +

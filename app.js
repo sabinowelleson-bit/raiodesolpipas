@@ -113,10 +113,25 @@ async function uploadFoto(arquivo) {
   return data.publicUrl;
 }
 
-async function adicionarProduto(produto, arquivoFoto, variantes) {
-  let imagem_url = null;
+// Cria (insert) OU edita (update) um produto. Se editId vier, ATUALIZA só os dados do
+// produto (nome/preço/categoria/estoque/descrição/destaque/imagem) — as VARIANTES NÃO são
+// tocadas na edição (isso é a Fase 3). imagemAtual = URL já salva, mantida quando o dono
+// não sobe uma foto nova.
+async function adicionarProduto(produto, arquivoFoto, variantes, editId, imagemAtual) {
+  // Imagem: foto nova -> upload; senão, na edição mantém a atual; na criação fica sem foto.
+  let imagem_url = editId ? (imagemAtual || null) : null;
   if (arquivoFoto) imagem_url = await uploadFoto(arquivoFoto);
 
+  // ---- EDIÇÃO: update do MESMO id (não duplica; não mexe em variantes) ----
+  if (editId) {
+    const patch = Object.assign({}, produto, { imagem_url: imagem_url });
+    const { error } = await sb.from('produtos').update(patch).eq('id', editId);
+    if (error) { console.error('Erro ao atualizar produto:', error); throw error; }
+    // Devolve os campos salvos p/ a tabela atualizar do cache (sem re-buscar no servidor).
+    return patch;
+  }
+
+  // ---- CRIAÇÃO (inalterada): insert + variantes ----
   // 1) Cria o produto e RECUPERA o registro criado (precisamos do id pra ligar as variantes)
   const { data: criado, error } = await sb
     .from('produtos')
@@ -144,6 +159,8 @@ async function adicionarProduto(produto, arquivoFoto, variantes) {
       throw new Error('O produto foi salvo, mas houve erro ao salvar as variações. Verifique e tente editar.');
     }
   }
+  // Devolve o produto criado (com variantes já anexadas) p/ a tabela atualizar do cache.
+  return Object.assign({ variantes: variantes && variantes.length ? variantes : [] }, criado);
 }
 
 // ===================================================================
@@ -194,16 +211,24 @@ function initAdmin() {
   const inputArquivo = document.getElementById('rs-imagem-arquivo');
   const preview = document.getElementById('rs-preview');
   let arquivoSelecionado = null;
+  let produtosCache = []; // guarda os produtos renderizados p/ o "Editar" achar por id
 
+  // Busca no servidor + renderiza (usado no load inicial).
   async function renderTabelaAdmin() {
-    const lista = await getProdutos({ somenteAtivos: false });
+    produtosCache = await getProdutos({ somenteAtivos: false });
+    renderTabelaFromCache();
+  }
+
+  // Renderiza SÓ a partir do cache local (sem ida ao servidor) — usado após salvar,
+  // pra não pagar um round-trip de rede a cada gravação.
+  function renderTabelaFromCache() {
     if (!tabela) return;
-    if (lista.length === 0) {
+    if (produtosCache.length === 0) {
       tabela.innerHTML =
         '<tr><td colspan="5" style="padding:24px;text-align:center;color:#64748B">Nenhum produto cadastrado ainda.</td></tr>';
       return;
     }
-    tabela.innerHTML = lista.map(function(p) {
+    tabela.innerHTML = produtosCache.map(function(p) {
       var nVars = (p.variantes || []).length;
       var precoTxt = (nVars > 0 ? 'A partir de ' : '') + formatarPreco(precoExibicao(p));
       var est = estoqueTotal(p);
@@ -215,6 +240,12 @@ function initAdmin() {
         '<td>' + estTxt + '</td>' +
         '<td style="text-align:center">' + (p.destaque ? '⭐ Sim' : '—') + '</td>' +
         '<td style="text-align:right">' +
+          '<button class="icon-action" onclick="rsEditarProduto(' + p.id + ')" title="Editar" style="margin-right:6px">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+              '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>' +
+              '<path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>' +
+            '</svg>' +
+          '</button>' +
           '<button class="icon-action danger" onclick="excluirProdutoAdmin(' + p.id + ')" title="Excluir">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
               '<polyline points="3 6 5 6 21 6"/>' +
@@ -231,6 +262,39 @@ function initAdmin() {
       const ok = await removerProduto(id);
       if (ok) renderTabelaAdmin();
     }
+  };
+
+  // Carrega um produto existente no formulário para EDITAR (só os dados do produto —
+  // as variantes NÃO são editadas aqui; isso é a Fase 3). Espelha o rsCupomEditar.
+  window.rsEditarProduto = function (id) {
+    const p = produtosCache.filter(function (x) { return String(x.id) === String(id); })[0];
+    if (!p) return;
+    // Estado de edição no HIDDEN do form (não numa var global) — sobrevive a re-render e
+    // some junto com o form no reset; evita salvar como "novo" e duplicar.
+    const editHidden = document.getElementById('rs-edit-id'); if (editHidden) editHidden.value = p.id;
+
+    document.getElementById('rs-nome').value = p.nome || '';
+    document.getElementById('rs-preco').value = (p.preco != null ? p.preco : '');
+    document.getElementById('rs-categoria').value = p.categoria || '';
+    // Estoque: null = NÃO controla -> campo VAZIO; número (inclusive 0) -> o valor.
+    document.getElementById('rs-estoque').value = (p.estoque == null ? '' : p.estoque);
+    document.getElementById('rs-descricao').value = p.descricao || '';
+    const chk = document.getElementById('rs-destaque'); if (chk) chk.checked = !!p.destaque;
+
+    // Imagem atual guardada no hidden -> mantida se o dono não trocar a foto.
+    const imgHidden = document.getElementById('rs-imagem'); if (imgHidden) imgHidden.value = p.imagem_url || '';
+    if (preview) {
+      if (p.imagem_url) { preview.src = p.imagem_url; preview.style.display = 'block'; }
+      else { preview.src = ''; preview.style.display = 'none'; }
+    }
+    arquivoSelecionado = null;
+    if (inputArquivo) inputArquivo.value = '';
+
+    // Sinaliza modo edição no botão (e o texto volta ao padrão ao salvar/limpar).
+    const bs = form.querySelector('[type="submit"]'); if (bs) bs.textContent = 'Salvar alterações';
+
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const nomeEl = document.getElementById('rs-nome'); if (nomeEl) nomeEl.focus();
   };
 
   // Preview da foto escolhida
@@ -252,40 +316,65 @@ function initAdmin() {
     });
   }
 
-  // Submissão do formulário
+  // Texto padrão do botão (pra restaurar ao sair do modo edição)
+  const btnLabelPadrao = (function () { const b = form.querySelector('[type="submit"]'); return b ? b.textContent : 'Salvar produto'; })();
+
+  // Lê o id de edição do HIDDEN do form (fonte da verdade — não de var global).
+  function lerEditId() { const e = document.getElementById('rs-edit-id'); return (e && e.value) ? e.value : null; }
+  function limparEditId() { const e = document.getElementById('rs-edit-id'); if (e) e.value = ''; }
+
+  // Submissão do formulário — CRIA (insert) ou EDITA (update) conforme o hidden rs-edit-id
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     const btn = form.querySelector('[type="submit"]');
     const checkDestaque = document.getElementById('rs-destaque');
+    // Estoque: campo VAZIO = não controla (null); "0" = esgotado; >0 = teto. (semântica null/0/>0)
+    const estoqueRaw = document.getElementById('rs-estoque').value.trim();
     const produto = {
       nome:      document.getElementById('rs-nome').value.trim(),
       preco:     parseFloat(document.getElementById('rs-preco').value) || 0,
       categoria: document.getElementById('rs-categoria').value.trim(),
-      estoque:   parseInt(document.getElementById('rs-estoque').value) || 0,
+      estoque:   estoqueRaw === '' ? null : (parseInt(estoqueRaw, 10) || 0),
       descricao: document.getElementById('rs-descricao').value.trim(),
       destaque:  checkDestaque ? checkDestaque.checked : false
     };
     if (!produto.nome) { alert('Informe o nome do produto.'); return; }
 
-    // Lê as variações preenchidas no formulário (se a UI estiver disponível)
-    const variantes = (window.rsVariantes && window.rsVariantes.ler) ? window.rsVariantes.ler() : [];
+    const editId = lerEditId();
+    const imagemAtual = (document.getElementById('rs-imagem') || {}).value || null;
+    // Na CRIAÇÃO lê as variações do form; na EDIÇÃO elas NÃO são tocadas (Fase 3).
+    const variantes = (!editId && window.rsVariantes && window.rsVariantes.ler) ? window.rsVariantes.ler() : [];
 
-    const textoBtn = btn ? btn.textContent : '';
     if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
     try {
-      await adicionarProduto(produto, arquivoSelecionado, variantes);
-      form.reset();
+      // Só faz upload se o dono ESCOLHEU uma foto nova; editar sem trocar foto = zero upload.
+      console.time('[admin] gravar produto');
+      const salvo = await adicionarProduto(produto, arquivoSelecionado, variantes, editId, imagemAtual);
+      console.timeEnd('[admin] gravar produto');
+
+      // Atualiza a tabela pelo CACHE local (sem re-buscar no servidor) — evita round-trip.
+      if (editId) {
+        const i = produtosCache.findIndex(function (x) { return String(x.id) === String(editId); });
+        if (i >= 0) produtosCache[i] = Object.assign({}, produtosCache[i], salvo);
+      } else if (salvo) {
+        produtosCache.unshift(salvo);
+      }
+
+      limparEditId();          // sai do modo edição (some do hidden)
+      form.reset();            // reset também zera os hidden (rs-edit-id/rs-imagem)
       arquivoSelecionado = null;
+      const imgHidden = document.getElementById('rs-imagem'); if (imgHidden) imgHidden.value = '';
       if (preview) preview.style.display = 'none';
       if (window.rsVariantes && window.rsVariantes.limpar) window.rsVariantes.limpar();
-      await renderTabelaAdmin();
-      alert('Produto cadastrado com sucesso!');
+      renderTabelaFromCache();
+      alert(editId ? 'Alterações salvas!' : 'Produto cadastrado com sucesso!');
     } catch (err) {
       // Mostra a mensagem real do erro quando existir (ajuda a diagnosticar)
       const msg = (err && err.message) ? err.message : 'Não foi possível salvar. Verifique se você está logado e tente novamente.';
       alert(msg);
     } finally {
-      if (btn) { btn.disabled = false; btn.textContent = textoBtn; }
+      // Volta ao padrão se saiu do modo edição; mantém "Salvar alterações" se ainda editando (deu erro).
+      if (btn) { btn.disabled = false; btn.textContent = lerEditId() ? 'Salvar alterações' : btnLabelPadrao; }
     }
   });
 

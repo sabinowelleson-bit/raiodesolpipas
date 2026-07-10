@@ -1010,6 +1010,9 @@
       display: flex; align-items: center; gap: 6px; margin-top: 4px;
     }
     .product-stock::before { content: ''; width: 6px; height: 6px; background: var(--success); border-radius: 50%; }
+    /* Esgotado (estoque 0): vermelho, igual à página do produto. Verde só p/ disponível. */
+    .product-stock.esgotado { color: var(--accent-3); }
+    .product-stock.esgotado::before { background: var(--accent-3); }
     :root[data-theme="c"] .product-stock::before { border-radius: 0; }
     .product-price {
       margin-top: auto; padding-top: 12px;

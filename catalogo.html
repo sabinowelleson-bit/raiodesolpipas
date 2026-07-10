@@ -235,6 +235,7 @@
     }
     .badge-pill.promo { background: var(--accent-3); color: white; }
     .badge-pill.novo  { background: var(--accent); color: white; }
+    .badge-pill.esgotado { background: var(--accent-3); color: white; }
     .cat-card-mini-body { padding: 14px; }
     .cat-card-mini-cat {
       display: block;
@@ -552,6 +553,22 @@
       return p.preco_promo || p.preco || 0;
     }
 
+    // Estoque total do produto (cópia fiel de estoqueTotal em app.js — esta página não carrega app.js).
+    // Semântica null/0/>0: se qualquer variante ativa não controla (estoque==null) => null (disponível);
+    // senão soma (0 = esgotado; >0 = quantidade). Sem variantes, usa o estoque do produto.
+    function estoqueTotal(p) {
+      var vars = variantesAtivas(p);
+      if (vars.length > 0) {
+        var soma = 0;
+        for (var i = 0; i < vars.length; i++) {
+          if (vars[i].estoque == null) return null;
+          soma += Number(vars[i].estoque) || 0;
+        }
+        return soma;
+      }
+      return p.estoque != null ? p.estoque : null;
+    }
+
     function linkWA(p) {
       var txt = 'Olá! Vi o site e tenho interesse em ' + p.nome + ' (' + formatarPreco(p.preco_promo || p.preco) + '). Pode me passar mais detalhes?';
       return 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(txt);
@@ -568,7 +585,9 @@
       var foto = p.imagem_url || SEM_FOTO;
 
       var badgeHTML = '';
-      if (temPromo) badgeHTML = '<span class="badge-pill promo">Promoção</span>';
+      // Esgotado tem prioridade sobre os outros selos (não faz sentido "Promoção" num produto esgotado).
+      if (estoqueTotal(p) === 0) badgeHTML = '<span class="badge-pill esgotado">Esgotado</span>';
+      else if (temPromo) badgeHTML = '<span class="badge-pill promo">Promoção</span>';
       else if (p.badge) badgeHTML = '<span class="badge-pill novo">' + esc(p.badge) + '</span>';
 
       var precoOriginalHTML = '';
